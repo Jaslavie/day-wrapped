@@ -9,13 +9,28 @@ export const summarizeDay = async (websites, topics) => {
     const longTermSummary = formatData(longTermMemory || [], "context");
     const goalsSummary = formatGoals(goals || [], "goals");
 
-    const prompt = `Summarize the user's day based on the websites and topics 
+    const prompt = `
+    You are a life coach and friend whose role is to optimize the user's day 
+    to achieve their professional goals while maintaining a meaningful personal life.
+    Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)
+    
+    Please provide your feedback in the following format with clear section breaks:
+    
+    [SHORT_TERM]
+    Summarize the user's day based on the websites and topics 
     the user has visited in the last 24 hours summarized inside of ${shortTermSummary}. 
+
+    [LONG_TERM]
     Compare the user's day with their past browsing history based on the 
     following context: ${longTermSummary}. 
+
+    [GOAL_ALIGNMENT]
     Compare the user's day with their goals based on the following goals: ${goalsSummary}. 
-    Break up the summary instead these 3 subsections to make it as concise, clear, and easy 
-    to understand as possible.`;
+    Also intelligently make inferences about what the user is working on based on the websites they are accessing 
+    (ex: if they are on a github repo, they are probably working on a coding project). Indicate ways to improve. 
+    
+    [ONE_LINER]
+    Then, summarize the user's day in one sentence as if they were replying to a friend's question about how their day went.`;
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -39,7 +54,13 @@ export const summarizeDay = async (websites, topics) => {
         }
 
         const data = await response.json();
-        return data.choices[0].message.content.trim();
+        const content = data.choices?.[0]?.message?.content; // content of the response
+
+        if (!content) {
+            throw new Error("No content in API response");
+        }
+
+        return content;
     } catch (error) {
         console.error("OpenAI API Error:", error);
         throw new Error("Failed to generate summary. Please check your API key and try again.");
