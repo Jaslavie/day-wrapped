@@ -10,6 +10,7 @@
  * longTermMemory: [{domain: string, visits: number}],
  * websites: [{url: string, time: number}],
  * topics: [{topic: string, time: number}],
+ * goals: {shortTerm: string[], longTerm: string[]}
  */
 
 // handle extension installation
