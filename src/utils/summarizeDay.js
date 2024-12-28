@@ -1,4 +1,3 @@
-
 export const summarizeDay = async (websites, topics) => {
     const { shortTermMemory, longTermMemory, goals } = await chrome.storage.local.get([
         "shortTermMemory", 
