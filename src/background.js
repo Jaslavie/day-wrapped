@@ -53,6 +53,7 @@ function saveToContext (memory) {
         const optimizedContext = optimizeContext(newContext);
         // save to chrome storage
         chrome.storage.local.set({ longTermMemory: optimizedContext });
+        console.log("Sample of long term memory:", optimizedContext.slice(0, 5));
     })
 }
 

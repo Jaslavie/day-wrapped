@@ -1,33 +1,44 @@
+import { OPENAI_API_KEY } from '../config';
+
 export const summarizeDay = async (websites, topics) => {
-    const shortTermMemory = await chrome.storage.local.get("shortTermMemory");
-    const longTermMemory = await chrome.storage.local.get("longTermMemory");
+    const { shortTermMemory } = await chrome.storage.local.get("shortTermMemory");
+    const { longTermMemory } = await chrome.storage.local.get("longTermMemory");
 
-    const shortTermSummary = formatData(shortTermMemory, "short-term");
-    const longTermSummary = formatData(longTermMemory, "context");
+    const shortTermSummary = formatData(shortTermMemory || [], "short-term");
+    const longTermSummary = formatData(longTermMemory || [], "context");
 
-    const prompt = `Summarize the user\'s day based on the websites and topics 
+    const prompt = `Summarize the user's day based on the websites and topics 
     the user has visited in the last 24 hours summarized inside of ${shortTermSummary}. 
     Compare the user's day with their goals and their past browsing history based on the 
-    following context: ${longTermSummary}.
-    `;
+    following context: ${longTermSummary}.`;
 
-    // send prompt to the LLM
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        },
-        body: JSON.string({
-            model: "text-davinci-003",
-            prompt,
-            max_tokens: 300,
-        }),
-    });
+    try {
+        const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            },
+            body: JSON.stringify({
+                model: "gpt-3.5-turbo",
+                messages: [{
+                    role: "user",
+                    content: prompt
+                }],
+                max_tokens: 300
+            }),
+        });
 
-    // return summary
-    const data = await response.json();
-    return data.choices[0].text.trim();
+        if (!response.ok) {
+            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        return data.choices[0].message.content.trim();
+    } catch (error) {
+        console.error("OpenAI API Error:", error);
+        throw new Error("Failed to generate summary. Please check your API key and try again.");
+    }
 };
 
 // helper function to retrieve data from chrome storage

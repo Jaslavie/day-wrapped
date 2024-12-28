@@ -9,21 +9,29 @@ const Summary = () => {
     const [summary, setSummary] = useState("");
 
     // fetch data
-    useEffect(() => {
-        const fetchData = async () => {
-            chrome.storage.local.get(["websites", "topics"], async (data) => {
-                const websites = data.websites;
-                const topics = data.topics;
-                const summary = await summarizeDay(websites, topics);
-                setSummary(summary);
-            })
+    const handleSummarize = async () => {
+        try {
+            // get the data from chrome storage and summarize the day
+            const { websites, topics } = await chrome.storage.local.get(["websites", "topics"]);
+            const summary = await summarizeDay(websites || [], topics || []);
+            setSummary(summary);
+        } catch (error) {
+            console.error("Error summarizing day:", error);
+            setSummary("Error summarizing day");
         }
-        fetchData();
-    }, [])
+    }
+
     return (
         <div className="card summary">
-            <div className="heading">Summary</div>
-            <div className="content">{summary}</div>
+            <div className="heading">Summary of your day</div>
+            <button
+                onClick = {handleSummarize}
+            >
+               Generate summary
+            </button>
+            {summary && (
+                <div className="content">{summary}</div>
+            )}
         </div>
     )
 }
