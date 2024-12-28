@@ -4,11 +4,20 @@
  * long term = websites visited in the last 30 days
  */
 
+/**
+ * Data is stored in chrome storage as key-value pairs:
+ * shortTermMemory: [{url: string, time: number}],
+ * longTermMemory: [{domain: string, visits: number}],
+ * websites: [{url: string, time: number}],
+ * topics: [{topic: string, time: number}],
+ */
+
 // handle extension installation
 chrome.runtime.onInstalled.addListener(() => {
     console.log("Day Wrapped Extension Installed");
 })
 
+// function to store new data
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     // if the tab is complete and has a url
     if (changeInfo.status === "complete" && tab.url) {
@@ -26,7 +35,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             filteredShortTermMemory.push({url: tab.url, time: currentTime});
             chrome.storage.local.set({ shortTermMemory: filteredShortTermMemory });
 
-            // save long term memory if the entry is older than 30 days
+            // save long term memory every 24 hours
             if (currentTime - (shortTermMemory[0]?.time || 0) >= 30 * 24 * 60 * 60 * 1000) {
                 saveToContext(shortTermMemory);
             }
