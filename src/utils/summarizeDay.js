@@ -1,4 +1,4 @@
-import { OPENAI_API_KEY } from '../config';
+import { OPENAI_API_KEY } from '../env';
 
 export const summarizeDay = async (websites, topics) => {
     const { shortTermMemory, longTermMemory, goals } = await chrome.storage.local.get([
@@ -24,7 +24,7 @@ export const summarizeDay = async (websites, topics) => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${OPENAI_API_KEY}`,
+                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
             },
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
