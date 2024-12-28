@@ -42,6 +42,9 @@ module.exports = {
         { from: "src/manifest.json", to: "manifest.json" },
       ],
     }),
+    new webpack.DefinePlugin({
+      'process.env.OPENAI_API_KEY': JSON.stringify(process.env.OPENAI_API_KEY)
+    })
   ],
   resolve: {
     extensions: [".js", ".jsx"]
