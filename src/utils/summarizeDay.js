@@ -1,4 +1,3 @@
-import { OPENAI_API_KEY } from '../env';
 
 export const summarizeDay = async (websites, topics) => {
     const { shortTermMemory, longTermMemory, goals } = await chrome.storage.local.get([
