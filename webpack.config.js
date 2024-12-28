@@ -1,22 +1,41 @@
 const path = require("path");
+const CopyPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require("html-webpack-plugin");
 
 module.exports = {
-  mode: "production",
-  entry: "./src/index.js",
+  mode: "development",
+  entry: {
+    background: "./src/background.js",
+    app: "./src/index.js"
+  },
   output: {
     path: path.resolve(__dirname, "dist"),
-    filename: "bundle.js",
+    filename: "[name].js",
+    clean: true
   },
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(js|jsx)$/,
         exclude: /node_modules/,
-        use: "babel-loader",
-      },
-    ],
+        use: {
+          loader: "babel-loader"
+        }
+      }
+    ]
   },
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: "./public/index.html",
+      chunks: ["app"]
+    }),
+    new CopyPlugin({
+      patterns: [
+        { from: "src/manifest.json", to: "manifest.json" }
+      ],
+    }),
+  ],
   resolve: {
-    extensions: [".js", ".jsx"],
-  },
+    extensions: [".js", ".jsx"]
+  }
 };

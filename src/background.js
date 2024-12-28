@@ -27,9 +27,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         chrome.storage.local.get(["shortTermMemory"], (data) => {
             const shortTermMemory = data.shortTermMemory || [];
             // filter out the websites that are older than 24 hrs
-            const filteredShortTermMemory = shortTermMemory.filter(website => {
+            const filteredShortTermMemory = shortTermMemory.filter(entry => 
                 currentTime - entry.time <= 24 * 60 * 60 * 1000 
-            })
+            );
 
             // add new entry and add to chrome storage
             filteredShortTermMemory.push({url: tab.url, time: currentTime});
