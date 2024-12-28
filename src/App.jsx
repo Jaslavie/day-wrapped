@@ -1,5 +1,8 @@
 import React from 'react';
 import MainPage from './pages/MainPage';
+import './styles/globals.sass';
+import './styles/components.sass';
+import './styles/layout.sass';
 
 const App = () => {
   return (

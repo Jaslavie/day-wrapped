@@ -11,6 +11,7 @@
  * websites: [{url: string, time: number}],
  * topics: [{topic: string, time: number}],
  * goals: {shortTerm: string[], longTerm: string[]}
+ * userName: string
  */
 
 // handle extension installation

@@ -1,0 +1,35 @@
+@use "variables" as *
+
+::root 
+    --primary-accent: $primaryAccent
+    --secondary-accent: $secondaryAccent
+    --outline: $outline
+    --text: $text
+    --heading: $heading
+    --card: $card
+    --background: $background
+
+::-webkit-scrollbar 
+    display: none
+
+* 
+    font-family: $font-family
+    color: $text
+    margin: 0  
+    padding: 0
+    -webkit-tap-highlight-color: transparent 
+    cursor: default 
+    outline: none 
+    scrollbar-width: none 
+    box-sizing: border-box 
+    vertical-align: middle 
+    font-weight: normal 
+    text-rendering: optimizeLegibility 
+    -webkit-font-smoothing: antialiased 
+    -moz-osx-font-smoothing: grayscale 
+    line-height: 1.25
+
+body, html
+    margin: 0
+    padding: 0
+    background-color: $background

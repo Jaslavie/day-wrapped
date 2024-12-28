@@ -20,10 +20,12 @@ const Goals = () => {
 
     // load existing goals
     useEffect(() => {
-        chrome.storage.local.get(['goals'], (data) => {
-            if (data.goals) setGoals(data.goals);
-        })
-    }, [])
+        if (chrome?.storage?.local) {
+            chrome.storage.local.get(['goals'], (data) => {
+                if (data.goals) setGoals(data.goals);
+            });
+        }
+    }, []);
 
     // handle goal submission
     const handleSubmit = (e) => {

@@ -1,8 +1,12 @@
 export const summarizeDay = async (websites, topics) => {
-    const { shortTermMemory, longTermMemory, goals } = await chrome.storage.local.get([
+    /**
+     * Function to summarize the user's day w
+     */
+    const { shortTermMemory, longTermMemory, goals, userName } = await chrome.storage.local.get([
         "shortTermMemory", 
         "longTermMemory", 
-        "goals"
+        "goals",
+        "userName"
     ]);
 
     const shortTermSummary = formatData(shortTermMemory || [], "short-term");
@@ -10,8 +14,11 @@ export const summarizeDay = async (websites, topics) => {
     const goalsSummary = formatGoals(goals || [], "goals");
 
     const prompt = `
-    You are a life coach and friend whose role is to optimize the user's day 
-    to achieve their professional goals while maintaining a meaningful personal life.
+    You are a life coach and friend whose role is to optimize ${userName || "your"}'s day 
+    to achieve their professional goals while maintaining a meaningful personal life. Your tone should sound friendly and conversational.
+    Your goal is to motivate ${userName || "you"} to achieve their goals by reminding then of their long term vision and share some clear actions to take
+    to improve chances of success.
+
     Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)
     
     Please provide your feedback in the following format with clear section breaks:
