@@ -76,7 +76,7 @@ const Goals = () => {
                 <div className="input-wrapper">
                     <input 
                         type="text" 
-                        placeholder="Short term goal"
+                        placeholder="type your goals..."
                         value={shortTermGoal}
                         onChange={(e) => setShortTermGoal(e.target.value)}
                     />

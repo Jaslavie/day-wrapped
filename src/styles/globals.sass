@@ -33,3 +33,63 @@ body, html
     margin: 0
     padding: 0
     background-color: $background
+    width: 400px
+
+// texts
+@mixin text
+    font-size: $text-size
+    font-weight: 400
+    line-height: 1.5
+    color: $text
+
+p, .content
+    @include text
+
+a
+    text-decoration: underline
+    @include text
+
+@mixin title
+    font-size: $title-size
+    font-weight: 600
+    line-height: 1.25
+    color: $heading
+
+.title
+    @include title
+
+@mixin heading
+    font-size: $heading-size
+    font-weight: 600
+    line-height: 1.5
+    color: $heading
+
+.heading 
+    @include heading
+
+@mixin subheading
+    font-size: $subheading-size
+    font-weight: 400
+    line-height: 1.5
+    color: $heading
+
+.subheading
+    @include subheading
+
+
+.editable
+    cursor: text
+    &:hover
+        opacity: 0.7
+button
+    padding: $spacing-xs $spacing-sm
+    background: $primaryAccent
+    color: white
+    border: none
+    border-radius: 4px
+    cursor: pointer
+    font-size: $text-size
+    
+    &:hover
+        opacity: 0.9
+    

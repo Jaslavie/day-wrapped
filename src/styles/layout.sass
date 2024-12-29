@@ -1,8 +1,39 @@
 @use "variables" as *
 
-container
+.container
     width: 100%
+    max-width: 600px
     height: 100%
-    display: flex
-    & .main
-        min-width: 200px
+    margin: 0 auto
+    padding: $spacing-md
+    background: 
+        image: linear-gradient($line-color 1px, transparent 1px)
+        size: 100% 24px
+    position: relative
+
+    &::before
+        content: ''
+        position: absolute
+        left: $spacing-md
+        top: 0
+        bottom: 0
+        width: 1px
+        background-color: $margin-color
+    &.main
+        padding: 36px
+        z-index: 100
+
+.card
+    background-color: $card
+    border-radius: 8px
+    border: $border
+    padding: $spacing-md
+    &.overview
+        display: flex
+        flex-direction: row
+        gap: $spacing-sm
+        .item
+            flex: 1
+            display: flex
+            flex-direction: column
+            gap: $spacing-xs

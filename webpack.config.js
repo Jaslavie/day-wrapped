@@ -42,14 +42,19 @@ module.exports = (env, argv) => {
           use: [
             'style-loader',
             'css-loader',
-            'sass-loader'
+            {
+              loader: 'sass-loader',
+              options: {
+                sourceMap: true
+              }
+            }
           ]
         }
       ]
     },
     plugins: [
       new webpack.DefinePlugin({
-        "process.env": JSON.stringify(env)
+        "process.env": JSON.stringify(dotenv.config().parsed)
       }),
       new HtmlWebpackPlugin({
         template: "./public/index.html",
@@ -58,6 +63,7 @@ module.exports = (env, argv) => {
       new CopyPlugin({
         patterns: [
           { from: "src/manifest.json", to: "manifest.json" },
+          { from: "src/background.js", to: "background.js" }
         ],
       }),
       new webpack.DefinePlugin({
@@ -65,7 +71,7 @@ module.exports = (env, argv) => {
       })
     ],
     resolve: {
-      extensions: [".js", ".jsx"]
+      extensions: [".js", ".jsx", ".sass", ".scss"]
     }
   };
 };

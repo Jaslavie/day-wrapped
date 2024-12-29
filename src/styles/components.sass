@@ -1,4 +1,64 @@
 @use "variables" as *
 
-input
-    border: $outline
+.header
+    margin-bottom: $spacing-lg
+    .heading
+        font-size: $heading-size
+        color: $heading
+
+.goals
+    margin-bottom: $spacing-lg
+    
+    .input-wrapper
+        margin: $spacing-sm 0
+        display: flex
+        flex-direction: column
+        gap: $spacing-sm
+        
+        input
+            flex: 1
+            padding: $spacing-xs $spacing-sm
+            border: 1px solid $outline
+            border-radius: 4px
+            background: $input-background
+            &::placeholder
+                color: $placeholder
+
+    .heading
+        display: flex
+        justify-content: space-between
+        align-items: center
+        margin: $spacing-sm 0
+        cursor: pointer
+
+    .collapsible
+        padding: $spacing-sm 0
+
+    .goal-list
+        list-style: none
+        
+        li
+            display: flex
+            justify-content: space-between
+            align-items: center
+            padding: $spacing-xs 0
+            
+            .edit-icon
+                opacity: 0.5
+                cursor: pointer
+                &:hover
+                    opacity: 1
+
+.section
+    margin: $spacing-lg 0
+    
+    .section-title
+        display: flex
+        align-items: center
+        gap: $spacing-xs
+        font-size: $subheading-size
+        color: $heading
+        margin-bottom: $spacing-sm
+        
+        .icon
+            opacity: 0.7

@@ -1,0 +1,33 @@
+@use 'variables' as *
+
+.card
+  background: $card
+  border-radius: $border-radius
+  padding: $spacing-md
+  margin-bottom: $spacing-md
+  border: $outline
+
+.input-wrapper
+  display: flex
+  gap: $spacing-sm
+  margin-bottom: $spacing-md
+  
+  input
+    flex: 1
+    padding: $spacing-sm
+    border-radius: $border-radius
+    border: $outline
+    background: $input-background
+    font-size: $text-size
+    
+    &::placeholder
+      color: lighten($text, 20%)
+
+  button
+    padding: $spacing-sm $spacing-md
+    border-radius: $border-radius
+    border: none
+    background: $heading
+    color: white
+    cursor: pointer
+
