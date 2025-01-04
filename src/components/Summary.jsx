@@ -38,41 +38,46 @@ const Summary = () => {
     }
 
     const parseSummary = (text) => {
-        if (!text || typeof text !== 'string') {
-            throw new Error("Invalid summary format");
-        }
-
         const sections = {
-            shortTerm: "",
-            longTerm: "",
-            goalAlignment: "",
-            oneLiner: ""
+            shortTerm: '',
+            longTerm: '',
+            goalAlignment: '',
+            oneLiner: ''
         };
 
-        const parts = text.split(/\[(\w+)\]/);
+        let currentSection = '';
+        const lines = text.split('\n');
         
-        for (let i = 1; i < parts.length - 1; i += 2) {
-            const section = parts[i];
-            const content = parts[i + 1] || "";
+        for (const line of lines) {
+            const sectionMatch = line.match(/\[(\w+)\]/);
+            if (sectionMatch) {
+                currentSection = sectionMatch[1].toUpperCase();
+                continue;
+            }
             
-            switch (section.toUpperCase()) {
+            switch (currentSection) {
                 case 'SHORT_TERM':
-                    sections.shortTerm = content.trim();
+                    sections.shortTerm += line + '\n';
                     break;
                 case 'LONG_TERM':
-                    sections.longTerm = content.trim();
+                    sections.longTerm += line + '\n';
                     break;
                 case 'GOAL_ALIGNMENT':
-                    sections.goalAlignment = content.trim();
+                    sections.goalAlignment += line + '\n';
                     break;
                 case 'ONE_LINER':
-                    sections.oneLiner = content.trim();
+                    sections.oneLiner += line + '\n';
                     break;
                 default:
-                    console.warn(`Unknown section: ${section}`);
+                    console.warn(`Unknown section: ${currentSection}`);
                     break;
             }
         }
+
+        // Trim whitespace
+        Object.keys(sections).forEach(key => {
+            sections[key] = sections[key].trim();
+        });
 
         return sections;
     };
@@ -82,26 +87,23 @@ const Summary = () => {
             <div className="heading">Summary of your day</div>
             <button
                 onClick = {handleSummarize}
+                className="generate"
             >
-                Generate summary
+                generate!
             </button>
-            {(summary.shortTerm || summary.longTerm || summary.goalAlignment || summary.oneLiner) && (
+            {(summary.shortTerm || summary.goalAlignment || summary.oneLiner) && (
                 <div className="summary-container">
                     <div className="summary-section">
-                        <div className="subheading">Today's summary</div>
-                        <p>{summary.shortTerm}</p>
+                        <div className="subheading">⚡️ one-liner</div>
+                        <p>{summary.oneLiner}</p>
                     </div>
                     <div className="summary-section">
-                        <div className="subheading">Long term summary</div>
-                        <p>{summary.longTerm}</p>
-                    </div>
-                    <div className="summary-section">
-                        <div className="subheading">Goal alignment</div>
+                        <div className="subheading">📝️ alignment with goals</div>
                         <p>{summary.goalAlignment}</p>
                     </div>
                     <div className="summary-section">
-                        <div className="subheading">One liner</div>
-                        <p>{summary.oneLiner}</p>
+                        <div className="subheading">✨ today's summary</div>
+                        <p>{summary.shortTerm}</p>
                     </div>
                 </div>
             )}

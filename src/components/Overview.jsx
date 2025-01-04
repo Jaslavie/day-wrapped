@@ -14,50 +14,66 @@ const Overview = () => {
      */
     const [domains, setDomains] = useState([]);
 
-    // get domains from chrome storage
     useEffect(() => {
-        if (chrome?.storage?.local) {
-            chrome.storage.local.get(['shortTermMemory'], (data) => {
-                if (data.shortTermMemory) {
-                    // Calculate domain percentages based on time spent
-                    const domainTimes = {};
-                    const totalTime = data.shortTermMemory.reduce((sum, entry) => {
-                        const timeSpent = entry.time || 0;
-                        return sum + timeSpent; // sum up the total time spent on all domains
-                    }, 0);
+        /**
+         * Fetch data from chrome storage and listen for changes
+         */
+        let isSubscribed = true; // subscription flag to the chrome stream
 
-                    // Sum up time spent on each domain
-                    data.shortTermMemory.forEach(entry => {
-                        const domain = new URL(entry.url).hostname; // ex: github.com
-                        const timeSpent = entry.time || 0; // ex: 10000 ms
-                        domainTimes[domain] = (domainTimes[domain] || 0) + timeSpent; // ex: {github.com: 10000}
-                    });
+        // fetch the data from chrome storage
+        async function fetchDomainStats() {
+            try {
+                const { shortTermStats } = await chrome.storage.local.get(StorageManager.STORAGE_KEYS.SHORT_TERM);
 
-                    // Convert to percentages and sort
-                    const sortedDomains = Object.entries(domainTimes)
-                        .map(([domain, time]) => ({
-                            domain,
-                            percentage: Math.round((time / totalTime) * 100)
-                        }))
-                        .sort((a, b) => b.percentage - a.percentage)
-                        .slice(0, 3); // Get top 3 domains
+                if (!shortTermStats || !isSubscribed) return;
 
-                    setDomains(sortedDomains);
-                }
-            });
+                const topDomains = Object.entries(shortTermStats.domains)
+                    .sort(([, a], [, b]) => b - a)
+                    .slice(0, 3) // return top 3 domains
+                    .map(([domain, time]) => ({ // map the domains to the percentage of time spent
+                        domain,
+                        percentage: Math.round((time / shortTermStats.total) * 100)
+                    }));
+
+                setDomains(topDomains);
+            } catch (error) {
+                console.error('Error fetching domain stats:', error);
+            }
+        };
+
+        // fetch data
+        fetchDomainStats();
+
+        // listen for changes 
+        const storageListener = (changes) => {
+            if (changes[StorageManager.STORAGE_KEYS.SHORT_TERM]) {
+                fetchDomainStats();
+            }
+        };
+
+        // when changed, fetch data
+        chrome.storage.onChanged.addListener(storageListener);
+
+        // unsubscribe from the chrome stream
+        return () => {
+            isSubscribed = false;
+            chrome.storage.onChanged.removeListener(storageListener);
         }
+
     }, []);
 
     return (
         <div className="card overview">
             {domains.map(({domain, percentage}) => (
-                <div key = {domain} className="item">
+                <div key={domain} className="item">
                     <div className="title">{percentage}%</div>
-                    <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">{domain}</a>
+                    <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">
+                        {domain}
+                    </a>
                 </div>
             ))}
         </div>
-    )
-}
+    );
+};
 
 export default Overview;

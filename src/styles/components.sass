@@ -1,14 +1,77 @@
 @use "variables" as *
+@use "layout" as *
 
 .header
-    margin-bottom: $spacing-lg
     .heading
         font-size: $heading-size
         color: $heading
 
-.goals
-    margin-bottom: $spacing-lg
+.section
+    margin: $spacing-lg 0
     
+    .section-title
+        display: flex
+        align-items: center
+        gap: $spacing-xs
+        font-size: $subheading-size
+        color: $heading
+        margin-bottom: $spacing-sm
+        
+        .icon
+            opacity: 0.7
+
+button
+    border-radius: 8px
+    border: none
+    padding: 18px 12px
+    background: $primaryAccent
+    color: white
+    font-size: $heading-size
+    font-weight: 600
+    cursor: pointer
+    &.generate
+        background-image: url('../images/buttonDayWrapped.png')
+        color: $primaryAccent
+        background-size: cover
+        background-position: center
+        background-repeat: no-repeat
+        width: 100%
+        height: 100%
+        border: 1.5px solid $primaryAccent
+        position: relative
+        transition: all 0.3s ease
+        overflow: hidden
+        
+        &:hover
+            box-shadow: 0 0 10px rgba($primaryAccent, 0.65)
+            transform: translateY(-2px)
+            
+            &::before, &::after
+                content: '✨'
+                position: absolute
+                animation: sparkle 1s infinite
+            
+            &::before
+                right: 15px
+                animation-delay: 0.2s
+            
+            &::after
+                left: 15px
+                animation-delay: 0.4s
+            
+            .sparkle
+                opacity: 1
+                transform: translate(0, 0)
+
+@keyframes sparkle
+    0%, 100%
+        opacity: 1
+        transform: scale(1)
+    50%
+        opacity: 0.5
+        transform: scale(0.8)
+
+.goals
     .input-wrapper
         margin: $spacing-sm 0
         display: flex
@@ -49,16 +112,13 @@
                 &:hover
                     opacity: 1
 
-.section
-    margin: $spacing-lg 0
-    
-    .section-title
+.summary-container
+    display: flex
+    flex-direction: column
+    gap: $spacing-md
+    .summary-section
         display: flex
-        align-items: center
+        flex-direction: column
         gap: $spacing-xs
-        font-size: $subheading-size
-        color: $heading
-        margin-bottom: $spacing-sm
-        
-        .icon
-            opacity: 0.7
+        @include card
+

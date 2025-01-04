@@ -5,74 +5,104 @@
  */
 
 /**
- * Data is stored in chrome storage as key-value pairs:
- * shortTermMemory: [{url: string, time: number}],
- * longTermMemory: [{domain: string, visits: number}],
- * websites: [{url: string, time: number}],
- * topics: [{topic: string, time: number}],
- * goals: {shortTerm: string[], longTerm: string[]}
- * userName: string
+ * Updated data structure:
+ * shortTermMemory: {
+ *   summary: string,           // Natural language summary of sites visited
+ *   lastUpdate: number,        // Timestamp of last update
+ *   domains: {                 // Rolling count of domain visits
+ *     [domain: string]: number
+ *   }
+ * }
+ * longTermMemory: {
+ *   summaries: [{             // Weekly summaries instead of raw data
+ *     week: number,           // Week number
+ *     summary: string,        // Natural language summary
+ *     topDomains: [{domain: string, count: number}] // Limited to top 10
+ *   }],
+ *   lastCleanup: number
+ * }
  */
+import { StorageManager } from './utils/storage';
+import { MonitoringService } from './utils/monitoring';
 
-// handle extension installation
-chrome.runtime.onInstalled.addListener(() => {
+// Constants
+const IDLE_TIMEOUT = 30; // seconds
+const UPDATE_INTERVAL = 5000; // 5 seconds
+const MONITORING_INTERVAL = 60000; // 1 minute
+
+// State management
+let activeTab = null;
+let lastActiveTime = Date.now();
+
+// Initialize monitoring
+let monitoringInterval;
+
+async function startMonitoring() {
+    const usage = await MonitoringService.checkStorageUsage();
+    console.log('Initial storage usage:', usage);
+    
+    monitoringInterval = setInterval(async () => {
+        await MonitoringService.checkStorageUsage();
+    }, MONITORING_INTERVAL);
+}
+
+// Installation and update handling
+chrome.runtime.onInstalled.addListener(async () => {
     console.log("Day Wrapped Extension Installed");
-})
+    await StorageManager.initialize();
+    await startMonitoring();
+});
 
-// function to store new data
+// Tab activity monitoring
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+    const tab = await chrome.tabs.get(activeInfo.tabId);
+    handleTabChange(tab);
+});
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    // if the tab is complete and has a url
-    if (changeInfo.status === "complete" && tab.url) {
-        const currentTime = Date.now();
-
-        // get short term memory 
-        chrome.storage.local.get(["shortTermMemory"], (data) => {
-            const shortTermMemory = data.shortTermMemory || [];
-            // filter out the websites that are older than 24 hrs
-            const filteredShortTermMemory = shortTermMemory.filter(entry => 
-                currentTime - entry.time <= 24 * 60 * 60 * 1000 
-            );
-
-            // add new entry and add to chrome storage
-            filteredShortTermMemory.push({url: tab.url, time: currentTime});
-            chrome.storage.local.set({ shortTermMemory: filteredShortTermMemory });
-
-            // save long term memory every 24 hours
-            if (currentTime - (shortTermMemory[0]?.time || 0) >= 30 * 24 * 60 * 60 * 1000) {
-                saveToContext(shortTermMemory);
-            }
-        })
+    if (changeInfo.status === "complete" && tab.active) {
+        handleTabChange(tab);
     }
-})
+});
 
-// function to save memory to long term context
-function saveToContext (memory) {
-    chrome.storage.local.get(["longTermMemory"], (data) => {
-        const longTermMemory = data.longTermMemory || [];
-        // create new memory by combining long and short term memory
-        const newContext = [...longTermMemory, ...memory];
-        // optimize storage
-        const optimizedContext = optimizeContext(newContext);
-        // save to chrome storage
-        chrome.storage.local.set({ longTermMemory: optimizedContext });
-        console.log("Sample of long term memory:", optimizedContext.slice(0, 5));
-    })
+// Idle state detection
+chrome.idle.onStateChanged.addListener((state) => {
+    if (state === 'active') {
+        lastActiveTime = Date.now();
+    } else {
+        handleInactiveState();
+    }
+});
+
+// Cleanup on extension unload
+chrome.runtime.onSuspend.addListener(async () => {
+    if (monitoringInterval) {
+        clearInterval(monitoringInterval);
+    }
+    await handleTabChange(null);
+    await StorageManager.flush();
+});
+
+// Helper functions
+async function handleTabChange(newTab) {
+    if (activeTab) {
+        const timeSpent = Date.now() - lastActiveTime;
+        if (timeSpent >= UPDATE_INTERVAL) {
+            await StorageManager.trackVisit(activeTab.url, timeSpent);
+        }
+    }
+
+    activeTab = newTab;
+    lastActiveTime = Date.now();
 }
 
-// function to optimize context by aggregating visits to each website
-function optimizeContext(context) {
-    // aggregate number of visits for each website
-    const domainVisits = context.reduce((acc, entry) => {
-        // extract domain from url
-        const domain = new URL(entry.url).hostname;
-        // increment count for the domain
-        acc[domain] = (acc[domain] || 0) + 1;
-        return acc;
-    }, {});
-
-    // create an array object mapping each domain to the number of visits
-    return Object.entries(domainVisits).map(([domain, visits]) => ({
-        domain,
-        visits
-    }))
+async function handleInactiveState() {
+    if (activeTab) {
+        const timeSpent = Date.now() - lastActiveTime;
+        await StorageManager.trackVisit(activeTab.url, timeSpent);
+        activeTab = null;
+    }
 }
+
+// Set up idle detection
+chrome.idle.setDetectionInterval(IDLE_TIMEOUT);

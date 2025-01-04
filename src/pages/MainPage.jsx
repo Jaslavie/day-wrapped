@@ -9,7 +9,6 @@ const MainPage = () => {
         <div className="container main">
             <Header/>
             <Goals/>
-            <hr />
             <Overview/>
             <Summary/>
         </div>

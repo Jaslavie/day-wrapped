@@ -13,31 +13,7 @@ export const summarizeDay = async (websites, topics) => {
     const longTermSummary = formatData(longTermMemory || [], "context");
     const goalsSummary = formatGoals(goals || [], "goals");
 
-    const prompt = `
-    You are a life coach and friend whose role is to optimize ${userName || "your"}'s day 
-    to achieve their professional goals while maintaining a meaningful personal life. Your tone should sound friendly and conversational.
-    Your goal is to motivate ${userName || "you"} to achieve their goals by reminding then of their long term vision and share some clear actions to take
-    to improve chances of success.
-
-    Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)
-    
-    Please provide your feedback in the following format with clear section breaks:
-    
-    [SHORT_TERM]
-    Summarize the user's day based on the websites and topics 
-    the user has visited in the last 24 hours summarized inside of ${shortTermSummary}. 
-
-    [LONG_TERM]
-    Compare the user's day with their past browsing history based on the 
-    following context: ${longTermSummary}. 
-
-    [GOAL_ALIGNMENT]
-    Compare the user's day with their goals based on the following goals: ${goalsSummary}. 
-    Also intelligently make inferences about what the user is working on based on the websites they are accessing 
-    (ex: if they are on a github repo, they are probably working on a coding project). Indicate ways to improve. 
-    
-    [ONE_LINER]
-    Then, summarize the user's day in one sentence as if they were replying to a friend's question about how their day went.`;
+    const prompt = createPrompt(userName, shortTermSummary, longTermSummary, goalsSummary);
 
     try {
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -76,13 +52,18 @@ export const summarizeDay = async (websites, topics) => {
 
 // helper function to retrieve data from chrome storage
 const formatData = (data, type) => {
-    if (data.length === 0) return `No ${type} data available`;
+    if (!Array.isArray(data) || data.length === 0) return `No ${type} data available`;
 
-    // format data for the LLM in the following format: - url (timestamp) or - domain: count visits
-    return data
-        .map((entry) => (entry.url ? `- ${entry.url} (${entry.time})` : `- ${entry.domain}: ${entry.count} visits`))
-        .join("\n"); // join the formatted data with a newline character
-}
+    let result = '';
+    for (let i = 0; i < data.length; i++) {
+        const entry = data[i];
+        result += entry.url 
+            ? `- ${entry.url} (${entry.time})`
+            : `- ${entry.domain}: ${entry.count} visits`;
+        if (i < data.length - 1) result += '\n';
+    }
+    return result;
+};
 
 // helper function to format goals
 const formatGoals = (goals) => {
@@ -92,3 +73,26 @@ const formatGoals = (goals) => {
     return `Short-term goals:\n${goals.shortTerm.map(goal => `- ${goal}`).join("\n")}\n\n` +
     `Long-term goals:\n${goals.longTerm.map(goal => `- ${goal}`).join("\n")}`;
 }
+
+const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary) => {
+    const parts = [
+        `You are a life coach and friend whose role is to optimize ${userName || "your"}'s day`,
+        'to achieve their professional goals while maintaining a meaningful personal life. Your tone should sound friendly and conversational.',
+        `Your goal is to motivate ${userName || "you"} to achieve their goals by reminding then of their long term vision and share some clear actions to take`,
+        'to improve chances of success.\n',
+        'Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)\n',
+        'Please provide your feedback in the following format with clear section breaks:\n',
+        '[SHORT_TERM]',
+        `Summarize the user's day based on the websites and topics the user has visited in the last 24 hours summarized inside of ${shortTermSummary}.\n`,
+        '[LONG_TERM]',
+        `Compare the user's day with their past browsing history based on the following context: ${longTermSummary}.\n`,
+        '[GOAL_ALIGNMENT]',
+        `Compare the user's day with their goals based on the following goals: ${goalsSummary}.\n`,
+        'Also intelligently make inferences about what the user is working on based on the websites they are accessing',
+        '(ex: if they are on a github repo, they are probably working on a coding project). Indicate ways to improve.\n',
+        '[ONE_LINER]',
+        "Then, summarize the user's day in one sentence as if they were replying to a friend's question about how their day went."
+    ];
+    
+    return parts.join(' ');
+};

@@ -48,6 +48,9 @@ p, .content
 a
     text-decoration: underline
     @include text
+    &:hover
+        cursor: pointer
+        opacity: 0.7
 
 @mixin title
     font-size: $title-size
@@ -81,15 +84,3 @@ a
     cursor: text
     &:hover
         opacity: 0.7
-button
-    padding: $spacing-xs $spacing-sm
-    background: $primaryAccent
-    color: white
-    border: none
-    border-radius: 4px
-    cursor: pointer
-    font-size: $text-size
-    
-    &:hover
-        opacity: 0.9
-    
