@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
 import { summarizeDay } from '../utils/summarizeDay';
+import Skeleton from 'react-loading-skeleton';
+import 'react-loading-skeleton/dist/skeleton.css';
 
 const Summary = () => {
     /**
@@ -12,9 +14,11 @@ const Summary = () => {
         goalAlignment: "",
         oneLiner: ""
     });
+    const [loading, setLoading] = useState(false);
 
     // fetch data
     const handleSummarize = async () => {
+        setLoading(true);
         try {
             // get the data from chrome storage and summarize the day
             const { websites, topics } = await chrome.storage.local.get(["websites", "topics"]);
@@ -34,6 +38,8 @@ const Summary = () => {
                 goalAlignment: "",
                 oneLiner: ""
             });
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -86,24 +92,37 @@ const Summary = () => {
         <div className="card summary">
             <div className="heading">Summary of your day</div>
             <button
-                onClick = {handleSummarize}
+                onClick={handleSummarize}
                 className="generate"
+                disabled={loading}
             >
-                generate!
+                {loading ? 'generating...' : 'generate!'}
             </button>
             {(summary.shortTerm || summary.goalAlignment || summary.oneLiner) && (
                 <div className="summary-container">
                     <div className="summary-section">
                         <div className="subheading">⚡️ one-liner</div>
-                        <p>{summary.oneLiner}</p>
+                        {loading ? (
+                            <Skeleton count={2} height={20} />
+                        ) : (
+                            <p>{summary.oneLiner}</p>
+                        )}
                     </div>
                     <div className="summary-section">
                         <div className="subheading">📝️ alignment with goals</div>
-                        <p>{summary.goalAlignment}</p>
+                        {loading ? (
+                            <Skeleton count={3} height={20} />
+                        ) : (
+                            <p>{summary.goalAlignment}</p>
+                        )}
                     </div>
                     <div className="summary-section">
                         <div className="subheading">✨ today's summary</div>
-                        <p>{summary.shortTerm}</p>
+                        {loading ? (
+                            <Skeleton count={4} height={20} />
+                        ) : (
+                            <p>{summary.shortTerm}</p>
+                        )}
                     </div>
                 </div>
             )}

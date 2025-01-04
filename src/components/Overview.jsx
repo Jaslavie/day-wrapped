@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StorageManager from '../utils/StorageManager';
 
 const Overview = () => {
     /**
@@ -23,7 +24,8 @@ const Overview = () => {
         // fetch the data from chrome storage
         async function fetchDomainStats() {
             try {
-                const { shortTermStats } = await chrome.storage.local.get(StorageManager.STORAGE_KEYS.SHORT_TERM);
+                // get stats from storage
+                const shortTermStats = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM);
 
                 if (!shortTermStats || !isSubscribed) return;
 
@@ -44,22 +46,20 @@ const Overview = () => {
         // fetch data
         fetchDomainStats();
 
-        // listen for changes 
-        const storageListener = (changes) => {
+        // Listen for changes in chrome storage
+        const handleStorageChange = (changes) => {
             if (changes[StorageManager.STORAGE_KEYS.SHORT_TERM]) {
                 fetchDomainStats();
             }
         };
 
-        // when changed, fetch data
-        chrome.storage.onChanged.addListener(storageListener);
+        chrome.storage.onChanged.addListener(handleStorageChange);
 
         // unsubscribe from the chrome stream
         return () => {
             isSubscribed = false;
-            chrome.storage.onChanged.removeListener(storageListener);
-        }
-
+            chrome.storage.onChanged.removeListener(handleStorageChange);
+        };
     }, []);
 
     return (

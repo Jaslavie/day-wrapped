@@ -1,21 +1,28 @@
-export const summarizeDay = async (websites, topics) => {
+import StorageManager from './StorageManager';
+
+export const summarizeDay = async () => {
     /**
      * Function to summarize the user's day w
      */
-    const { shortTermMemory, longTermMemory, goals, userName } = await chrome.storage.local.get([
-        "shortTermMemory", 
-        "longTermMemory", 
-        "goals",
-        "userName"
-    ]);
-
-    const shortTermSummary = formatData(shortTermMemory || [], "short-term");
-    const longTermSummary = formatData(longTermMemory || [], "context");
-    const goalsSummary = formatGoals(goals || [], "goals");
-
-    const prompt = createPrompt(userName, shortTermSummary, longTermSummary, goalsSummary);
-
     try {
+        const { 
+            shortTermMemory, 
+            longTermMemory, 
+            goals, 
+            userName 
+        } = await StorageManager.getMultiple([
+            StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY,
+            StorageManager.STORAGE_KEYS.LONG_TERM_MEMORY,
+            StorageManager.STORAGE_KEYS.GOALS,
+            StorageManager.STORAGE_KEYS.USER_NAME
+        ]);
+
+        const shortTermSummary = formatData(shortTermMemory || [], "short-term");
+        const longTermSummary = formatData(longTermMemory || [], "context");
+        const goalsSummary = formatGoals(goals || [], "goals");
+
+        const prompt = createPrompt(userName, shortTermSummary, longTermSummary, goalsSummary);
+
         const response = await fetch("https://api.openai.com/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -45,7 +52,7 @@ export const summarizeDay = async (websites, topics) => {
 
         return content;
     } catch (error) {
-        console.error("OpenAI API Error:", error);
+        console.error("Error:", error);
         throw new Error("Failed to generate summary. Please check your API key and try again.");
     }
 };
