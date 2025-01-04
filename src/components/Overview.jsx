@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import Skeleton from 'react-loading-skeleton';
 import StorageManager from '../utils/StorageManager';
+import 'react-loading-skeleton/dist/skeleton.css';
 
-const Overview = () => {
+const Overview = ({loading}) => {
     /**
      * Percentage of time spent on each topic (ex: coding, company research, etc.)
      * Percentage of time spent on each website (ex: google, github, etc.)
@@ -24,55 +26,56 @@ const Overview = () => {
         // fetch the data from chrome storage
         async function fetchDomainStats() {
             try {
-                // get stats from storage
                 const shortTermStats = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM);
-
+                
                 if (!shortTermStats || !isSubscribed) return;
 
-                const topDomains = Object.entries(shortTermStats.domains)
+                const totalTime = Object.values(shortTermStats.domains || {}).reduce((a, b) => a + b, 0);
+                
+                const topDomains = Object.entries(shortTermStats.domains || {})
                     .sort(([, a], [, b]) => b - a)
                     .slice(0, 3) // return top 3 domains
                     .map(([domain, time]) => ({ // map the domains to the percentage of time spent
                         domain,
-                        percentage: Math.round((time / shortTermStats.total) * 100)
+                        percentage: Math.round((time / totalTime) * 100)
                     }));
 
                 setDomains(topDomains);
             } catch (error) {
                 console.error('Error fetching domain stats:', error);
             }
-        };
+        }
 
         // fetch data
         fetchDomainStats();
 
-        // Listen for changes in chrome storage
-        const handleStorageChange = (changes) => {
+        chrome.storage.onChanged.addListener((changes) => {
             if (changes[StorageManager.STORAGE_KEYS.SHORT_TERM]) {
                 fetchDomainStats();
             }
-        };
+        });
 
-        chrome.storage.onChanged.addListener(handleStorageChange);
-
-        // unsubscribe from the chrome stream
         return () => {
             isSubscribed = false;
-            chrome.storage.onChanged.removeListener(handleStorageChange);
         };
     }, []);
 
     return (
         <div className="card overview">
-            {domains.map(({domain, percentage}) => (
-                <div key={domain} className="item">
-                    <div className="title">{percentage}%</div>
-                    <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">
-                        {domain}
-                    </a>
-                </div>
-            ))}
+            {loading ? (
+                <Skeleton count={3} height={24} />
+            ) : domains.length > 0 ? (
+                domains.map(({domain, percentage}) => (
+                    <div key={domain} className="item">
+                        <span className="title">{percentage}%</span>
+                        <a href={`https://${domain}`} target="_blank" rel="noopener noreferrer">{domain}</a>
+                    </div>
+                ))
+            ) : (
+                <div className="no-data">No browsing data yet</div>
+            )}
         </div>
+   
     );
 };
 

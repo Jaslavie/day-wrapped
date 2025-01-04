@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import StorageManager from '../utils/StorageManager';
 
 const Goals = () => {
     /**
@@ -8,56 +9,44 @@ const Goals = () => {
      * - long term goals for their career and life
      */
 
-    // data
-    const [shortTermGoal, setShortTermGoal] = useState("");
-    const [longTermGoal, setLongTermGoal] = useState("");
-    const [goals, setGoals] = useState({ shortTerm: [], longTerm: []});
 
     // goals
+    const [goals, setGoals] = useState({ shortTerm: [], longTerm: [] }); // goals stored in chrome storage
+    const [newGoal, setNewGoal] = useState(""); // new goal added by user to long term goals
+
+    // misc
     const [isExpanded, setIsExpanded] = useState(true);
     const [editIndex, setEditIndex] = useState({ type: null, index: null });
     const [editValue, setEditValue] = useState("");
+    const [showAddInput, setShowAddInput] = useState(false);
 
-    // load existing goals
+    // load existing goals from chrome storage
     useEffect(() => {
-        if (chrome?.storage?.local) {
-            chrome.storage.local.get(['goals'], (data) => {
-                if (data.goals) setGoals(data.goals);
-            });
+        async function loadGoals() {
+            const goals = await StorageManager.get(StorageManager.STORAGE_KEYS.GOALS);
+            if (goals) setGoals(goals);
         }
+        loadGoals();
     }, []);
 
-    // handle goal submission
-    const handleSubmit = (e) => {
-        e.preventDefault();
+    const handleAddGoal = () => {
+        if (!newGoal.trim()) return; 
         
-        // update goals based on use input
+        // update goals based on user input
         const updatedGoals = {
-            shortTerm: shortTermGoal ? [...goals.shortTerm, shortTermGoal] : goals.shortTerm,
-            longTerm: longTermGoal ? [...goals.longTerm, longTermGoal] : goals.longTerm,
-        }
+            ...goals,
+            longTerm: [...goals.longTerm, newGoal.trim()]
+        };
 
         // save to chrome storage
         chrome.storage.local.set({ goals: updatedGoals });
         setGoals(updatedGoals);
-
-        // clear input fields
-        setShortTermGoal("");
-        setLongTermGoal("");
+        setNewGoal("");
+        setShowAddInput(false); // change back to add more button
     };
 
-    /**
-     * handle goal editing
-     * @param {string} type - "shortTerm" or "longTerm"
-     * @param {number} index - index of the goal to edit
-     * @param {string} value - new value for the goal
-     */
-    const startEdit = (type, index, value) => {
-        setEditIndex({ type, index }); // set the index of the goal to edit
-        setEditValue(value); // set the value of the goal to edit
-    }
-
     const handleEdit = () => {
+        // pull all goals from chrome storage
         const updatedGoals = {...goals};
         // update the goal at the specified index
         updatedGoals[editIndex.type][editIndex.index] = editValue;
@@ -65,63 +54,73 @@ const Goals = () => {
         chrome.storage.local.set({goals: updatedGoals});
         // update the local goal state
         setGoals(updatedGoals);
-        // clear the edit state
-        setEditIndex({type:null, index:null});
-    }
+        setEditIndex({type: null, index: null});
+        setEditValue("");
+    };
 
     return (
         <div className="card goals">
-            {/* form to add goals */}
-            <form onSubmit={handleSubmit}>
-                <div className="input-wrapper">
-                    <input 
-                        type="text" 
-                        placeholder="type your goals..."
-                        value={shortTermGoal}
-                        onChange={(e) => setShortTermGoal(e.target.value)}
-                    />
-                    <input 
-                        type="text" 
-                        placeholder="Long term goal"
-                        value={longTermGoal}
-                        onChange={(e) => setLongTermGoal(e.target.value)}
-                    />
-                    <button type="submit">Add goals</button>
+            <div onClick={() => setIsExpanded(!isExpanded)}>
+                <div className="heading">
+                    🚀 your long term goals
+                    <span>{isExpanded ? <i className="fa-solid fa-chevron-up"></i> : <i className="fa-solid fa-chevron-down"></i>}</span>
                 </div>
-            </form>
-
-            {/* toggle long term goals */}
-            <div className="heading" 
-                onClick={() => setIsExpanded(!isExpanded)}
-                style={{cursor: "pointer"}}
-            >
-                Set your goals
-                <span>
-                    {isExpanded ? '▼' : '▶'}
-                </span>
             </div>
             
             {/* content to show if expanded */}
-            {!isExpanded && (
-                <>
-                    {/* collapsible list of goals */}
-                    <div className="collapsable goals">
-                        <div className="heading">Goals</div>
-                        {goals.longTerm.length > 0 && (
-                            <div>
-                                <div className="subheading">Long term goals</div>
-                                <ul>
-                                    {goals.longTerm.map((goal, index) => (
-                                        <li key = {`long-${index}`}>{goal}</li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                    </div>
-                </>
+            {isExpanded && (
+                <div className="goals-list">
+                    {goals.longTerm.map((goal, index) => (
+                        <div key={`long-${index}`} className="goal-item">
+                            {editIndex.type === 'longTerm' && editIndex.index === index ? (
+                                <div className="edit-mode">
+                                    <input
+                                        type="text"
+                                        value={editValue}
+                                        onChange={(e) => setEditValue(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleEdit()}
+                                    />
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="text">{goal}</div>
+                                    <button 
+                                        className="edit"
+                                        onClick={() => {
+                                            setEditIndex({ type: 'longTerm', index });
+                                            setEditValue(goal);
+                                        }}
+                                    >
+                                        <i class="fa-solid fa-pencil" style={{color: '#606060'}}></i>
+                                    </button>
+                                </>
+                            )}
+                        </div>
+                    ))}
+                    
+                    {/* add new goal */}
+                    {showAddInput ? (
+                        <div className="add-goal-input">
+                            <input
+                                type="text"
+                                value={newGoal}
+                                onChange={(e) => setNewGoal(e.target.value)}
+                                placeholder="Enter your long term goal..."
+                                onKeyPress={(e) => e.key === 'Enter' && handleAddGoal()}
+                            />
+                        </div>
+                    ) : (
+                        <button 
+                            className="add-more"
+                            onClick={() => setShowAddInput(true)}
+                        >
+                            + add more...
+                        </button>
+                    )}
+                </div>
             )}
         </div>
-    )
-}
+    );
+};
 
 export default Goals;

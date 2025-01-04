@@ -1,4 +1,5 @@
 import StorageManager from './StorageManager';
+import context from '../context/context';
 
 export const summarizeDay = async () => {
     /**
@@ -82,15 +83,29 @@ const formatGoals = (goals) => {
 }
 
 const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary) => {
+    // Format the context for the AI
+    const toneContext = `
+        Writing Style:
+        - Tone: ${context.writingStyle.tone}
+        - Tempo: ${context.writingStyle.tempo}
+        - Focus: ${context.writingStyle.focus}
+        
+        Common phrases I use: ${context.casualPhrases.join(', ')}
+        
+        Example responses in my style:
+        ${context.examples.slice(0, 3).join('\n')}
+    `;
+
     const parts = [
-        `You are a life coach and friend whose role is to optimize ${userName || "your"}'s day`,
-        'to achieve their professional goals while maintaining a meaningful personal life. Your tone should sound friendly and conversational.',
-        `Your goal is to motivate ${userName || "you"} to achieve their goals by reminding then of their long term vision and share some clear actions to take`,
-        'to improve chances of success.\n',
+        `You are a strategic and empathetic life coach and close friend whose role is to optimize ${userName || "your"}'s day`,
+        'to achieve their professional goals while maintaining a meaningful personal life. Pretend you are taking to them.',
+        `Here's how you should match my communication style:\n${toneContext}\n`,
+        `Your goal is to motivate ${userName || "you"} to achieve their goals by reminding them of their long term vision and share some clear actions to take`,
+        'to improve chances of success. Your summary should be under 50 words and strategize the top 1 most strategic next move to take to optimize for success, ignoring tasks that are not relevant in the current context.\n',
         'Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)\n',
         'Please provide your feedback in the following format with clear section breaks:\n',
         '[SHORT_TERM]',
-        `Summarize the user's day based on the websites and topics the user has visited in the last 24 hours summarized inside of ${shortTermSummary}.\n`,
+        `Summarize the user's day based on the websites and topics the user has visited in the last 24 hours: ${shortTermSummary}.\n`,
         '[LONG_TERM]',
         `Compare the user's day with their past browsing history based on the following context: ${longTermSummary}.\n`,
         '[GOAL_ALIGNMENT]',
@@ -98,7 +113,7 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary)
         'Also intelligently make inferences about what the user is working on based on the websites they are accessing',
         '(ex: if they are on a github repo, they are probably working on a coding project). Indicate ways to improve.\n',
         '[ONE_LINER]',
-        "Then, summarize the user's day in one sentence as if they were replying to a friend's question about how their day went."
+        "Then, meaningfully summarize the user's day in one sentence as if they were responding to a friend's question about how their day went in a friendly tone."
     ];
     
     return parts.join(' ');

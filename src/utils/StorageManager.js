@@ -8,24 +8,49 @@ class StorageManager {
         LONG_TERM_MEMORY: 'longTermMemory'
     };
 
+    static async initialize() {
+        // Initialize storage with empty values
+        const defaults = {
+            [this.STORAGE_KEYS.SHORT_TERM]: { domains: {}, total: 0 },
+            [this.STORAGE_KEYS.LONG_TERM]: { domains: {}, total: 0 },
+            [this.STORAGE_KEYS.GOALS]: { shortTerm: [], longTerm: [] },
+            [this.STORAGE_KEYS.SHORT_TERM_MEMORY]: { domains: {}, lastUpdate: Date.now() },
+            [this.STORAGE_KEYS.LONG_TERM_MEMORY]: { summaries: [], lastCleanup: Date.now() }
+        };
+
+        for (const [key, value] of Object.entries(defaults)) {
+            const existing = await this.get(key);
+            if (!existing) {
+                await this.set(key, value);
+            }
+        }
+    }
+
     static async get(key) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get([key], (result) => {
-                resolve(result[key]);
-            });
-        });
+        try {
+            const result = await chrome.storage.local.get(key);
+            return result[key];
+        } catch (error) {
+            console.error('Storage get error:', error);
+            return null;
+        }
     }
 
     static async set(key, value) {
-        return new Promise((resolve) => {
-            chrome.storage.local.set({ [key]: value }, resolve);
-        });
+        try {
+            await chrome.storage.local.set({ [key]: value });
+        } catch (error) {
+            console.error('Storage set error:', error);
+        }
     }
 
     static async getMultiple(keys) {
-        return new Promise((resolve) => {
-            chrome.storage.local.get(keys, resolve);
-        });
+        try {
+            return await chrome.storage.local.get(keys);
+        } catch (error) {
+            console.error('Storage getMultiple error:', error);
+            return {};
+        }
     }
 }
 

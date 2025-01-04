@@ -22,7 +22,7 @@
  *   lastCleanup: number
  * }
  */
-import { StorageManager } from './utils/storage';
+import StorageManager from './utils/StorageManager';
 import { MonitoringService } from './utils/monitoring';
 
 // Constants

@@ -54,7 +54,6 @@ const Header = () => {
                 ) : (
                 <span
                     onMouseEnter={() => setIsEditing(true)}
-                    className="editable"
                 >
                         {name}
                     </span>

@@ -41,6 +41,7 @@ button
         position: relative
         transition: all 0.3s ease
         overflow: hidden
+        margin: $spacing-sm 0
         
         &:hover
             box-shadow: 0 0 10px rgba($primaryAccent, 0.65)
@@ -62,6 +63,38 @@ button
             .sparkle
                 opacity: 1
                 transform: translate(0, 0)
+    &.edit
+        background-color: $icon
+        border-radius: 4px
+        padding: 8px
+        font-size: $text-size
+        cursor: pointer
+        &:hover
+            background-color: $iconHover
+    &.add-more
+        width: 100%
+        padding: 12px
+        margin-top: 8px
+        border: 2px dashed #ddd
+        background: none
+        color: #999
+        cursor: pointer
+        border-radius: 4px
+        
+        &:hover
+            border-color: #bbb
+            color: #666
+        
+
+input
+    flex: 1
+    padding: $spacing-xs $spacing-sm
+    border: 1px solid $outline
+    border-radius: 4px
+    background: $input-background
+    width: 100%
+    &::placeholder
+        color: $placeholder
 
 @keyframes sparkle
     0%, 100%
@@ -77,15 +110,6 @@ button
         display: flex
         flex-direction: column
         gap: $spacing-sm
-        
-        input
-            flex: 1
-            padding: $spacing-xs $spacing-sm
-            border: 1px solid $outline
-            border-radius: 4px
-            background: $input-background
-            &::placeholder
-                color: $placeholder
 
     .heading
         display: flex
@@ -97,20 +121,18 @@ button
     .collapsible
         padding: $spacing-sm 0
 
-    .goal-list
+    .goals-list
         list-style: none
         
-        li
+        .goal-item
             display: flex
+            flex-direction: row
             justify-content: space-between
             align-items: center
             padding: $spacing-xs 0
+            border-bottom: 1px solid $outline
+            padding-bottom: $spacing-sm
             
-            .edit-icon
-                opacity: 0.5
-                cursor: pointer
-                &:hover
-                    opacity: 1
 
 .summary-container
     display: flex
@@ -121,4 +143,7 @@ button
         flex-direction: column
         gap: $spacing-xs
         @include card
+
+.react-loading-skeleton
+    margin: $spacing-sm 0
 
