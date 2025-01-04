@@ -1,8 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
-const CopyPlugin = require('copy-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
-const Dotenv = require('dotenv-webpack');
 
 module.exports = {
   entry: {
@@ -14,73 +13,48 @@ module.exports = {
     filename: '[name].js',
     clean: true
   },
-  experiments: {
-    topLevelAwait: true
-  },
   module: {
     rules: [
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
         use: {
-          loader: 'babel-loader',
-          options: {
-            presets: [
-              ['@babel/preset-env', {
-                targets: {
-                  chrome: "88"
-                }
-              }]
-            ]
-          }
+          loader: 'babel-loader'
         }
       },
       {
-        test: /\.css$/,
-        use: [MiniCssExtractPlugin.loader, 'css-loader']
+        test: /\.(css|sass|scss)$/,
+        use: [MiniCssExtractPlugin.loader, 'css-loader', 'sass-loader']
       },
       {
-        test: /\.(scss|sass)$/,
-        use: [
-          MiniCssExtractPlugin.loader,
-          'css-loader',
-          {
-            loader: 'sass-loader',
-            options: {
-              implementation: require('sass'),
-              sassOptions: {
-                fiber: false,
-              },
-            },
-          },
-        ]
+        test: /\.(png|jpe?g|gif)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'images/[name][ext]'
+        }
       }
     ]
   },
+  resolve: {
+    extensions: ['.js', '.jsx', '.json'],
+    modules: [path.resolve(__dirname, 'src'), 'node_modules']
+  },
   plugins: [
     new HtmlWebpackPlugin({
-      template: './public/index.html',
-      chunks: ['main']
+      template: './public/index.html'
     }),
     new MiniCssExtractPlugin(),
-    new Dotenv(),
-    new CopyPlugin({
+    new CopyWebpackPlugin({
       patterns: [
         {
-          from: './src/manifest.template.js',
-          to: 'manifest.json',
-          transform(content) {
-            const manifest = require('./src/manifest.template.js');
-            manifest.background = {
-              service_worker: "background.js"
-            };
-            return JSON.stringify(manifest, null, 2);
-          }
+          from: 'src/images',
+          to: 'images'
+        },
+        {
+          from: 'src/manifest.json',
+          to: 'manifest.json'
         }
       ]
     })
-  ],
-  resolve: {
-    extensions: ['.js', '.jsx']
-  }
+  ]
 };

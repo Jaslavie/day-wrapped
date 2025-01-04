@@ -1,11 +1,28 @@
 @use "variables" as *
 @use "layout" as *
+@use "globals" as *
 
 .header
     .heading
-        font-size: $heading-size
+        font-size: $title-size
         color: $heading
-
+        display: flex
+        flex-direction: row
+        align-items: center
+        justify-content: flex-start
+        .username
+            font-family: "Sans Serif Pro"
+            font-weight: 600
+            font-style: italic
+            font-size: 32px
+            margin-left: $spacing-sm
+        img
+            cursor: pointer
+            background-color: white
+            width: 30px
+            height: 30px
+            &:hover
+                background-color: $iconHover
 .section
     margin: $spacing-lg 0
     
@@ -21,6 +38,7 @@
             opacity: 0.7
 
 button
+    display: flex
     border-radius: 8px
     border: none
     padding: 18px 12px
@@ -29,9 +47,14 @@ button
     font-size: $heading-size
     font-weight: 600
     cursor: pointer
+    align-self: center
+    justify-content: center
+    align-items: center
+    justify-self: center
     &.generate
-        background-image: url('../images/buttonDayWrapped.png')
-        color: $primaryAccent
+        background-color: $primaryAccent
+        background-image: url(../images/buttonDayWrapped.png)
+        color: white
         background-size: cover
         background-position: center
         background-repeat: no-repeat
@@ -69,6 +92,8 @@ button
         padding: 8px
         font-size: $text-size
         cursor: pointer
+        height: 30px
+        width: 30px
         &:hover
             background-color: $iconHover
     &.add-more
@@ -95,6 +120,42 @@ input
     width: 100%
     &::placeholder
         color: $placeholder
+    &:hover
+        border: 1px solid white
+        cursor: pointer
+
+input[type="checkbox"]
+    appearance: none
+    -webkit-appearance: none
+    width: 20px
+    height: 20px
+    padding: 0
+    flex: none
+    border: 1px solid $outline
+    background-color: $card
+    border-radius: 4px
+    margin-right: $spacing-sm
+    position: relative
+    cursor: pointer
+
+    &:hover
+        background-color: $cardHover
+
+    &:checked
+        background-color: $primaryAccent
+        border-color: $primaryAccent
+
+        &::after
+            content: ''
+            position: absolute
+            left: 6px
+            top: 2px
+            width: 5px
+            height: 10px
+            border: solid white
+            border-width: 0 2px 2px 0
+            transform: rotate(45deg)
+
 
 @keyframes sparkle
     0%, 100%
@@ -128,9 +189,15 @@ input
             flex-direction: row
             justify-content: space-between
             align-items: center
-            padding: $spacing-xs 0
+            width: 100%
             border-bottom: 1px solid $outline
-            padding-bottom: $spacing-sm
+            gap: $spacing-sm
+            padding: $spacing-sm 0
+            &.short-term
+                align-items: flex-start
+                padding: $spacing-sm 0
+                border-bottom: none
+                justify-content: flex-start
             
 
 .summary-container

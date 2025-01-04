@@ -1,19 +1,33 @@
 {
-    "manifest_version": 3,
-    "name": "Day Wrapped Extension",
-    "version": "1.0",
-    "permissions": [
-      "tabs",
-      "storage"
-    ],
-    "host_permissions": [
-      "<all_urls>"
-    ],
-    "action": {
-      "default_popup": "index.html"
-    },
-    "background": {
-      "service_worker": "background.js",
-      "type": "module"
+  "manifest_version": 3,
+  "name": "Day Wrapped Extension",
+  "description": "A chrome extension that helps you track your browsing habits based on context over your goals.",
+  "version": "1.0",
+  "permissions": [
+    "tabs",
+    "storage",
+    "idle"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_popup": "index.html",
+    "default_icon": {
+      "16": "images/favicon_daywrapped.png",
+      "32": "images/favicon_daywrapped.png",
+      "48": "images/favicon_daywrapped.png",
+      "128": "images/favicon_daywrapped.png"
     }
+  },
+  "icons": {
+    "16": "images/favicon_daywrapped.png",
+    "32": "images/favicon_daywrapped.png",
+    "48": "images/favicon_daywrapped.png",
+    "128": "images/favicon_daywrapped.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
   }
+}
