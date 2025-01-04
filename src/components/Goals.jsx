@@ -63,8 +63,12 @@ const Goals = () => {
             <div onClick={() => setIsExpanded(!isExpanded)}>
                 <div className="heading">
                     🚀 your long term goals
-                    <span>{isExpanded ? <i className="fa-solid fa-chevron-up"></i> : <i className="fa-solid fa-chevron-down"></i>}</span>
+                    {isExpanded ? 
+                        <i className="fa-solid fa-chevron-up" style={{color: '#606060'}}></i> : 
+                        <i className="fa-solid fa-chevron-down" style={{color: '#606060'}}></i>
+                    }
                 </div>
+                <hr />
             </div>
             
             {/* content to show if expanded */}
@@ -91,7 +95,7 @@ const Goals = () => {
                                             setEditValue(goal);
                                         }}
                                     >
-                                        <i class="fa-solid fa-pencil" style={{color: '#606060'}}></i>
+                                        <i className="fa-solid fa-pencil" style={{color: '#606060'}}></i>
                                     </button>
                                 </>
                             )}

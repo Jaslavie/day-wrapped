@@ -89,11 +89,12 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary)
         - Tone: ${context.writingStyle.tone}
         - Tempo: ${context.writingStyle.tempo}
         - Focus: ${context.writingStyle.focus}
-        
-        Common phrases I use: ${context.casualPhrases.join(', ')}
-        
+        - Personality: ${context.writingStyle.personality}
+
+        Common phrases: ${context.casualPhrases.join(', ')}
+
         Example responses in my style:
-        ${context.examples.slice(0, 3).join('\n')}
+        ${context.examples.slice(0, 3).map(ex => `- ${ex}`).join('\n')}
     `;
 
     const parts = [
@@ -103,7 +104,7 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary)
         `Your goal is to motivate ${userName || "you"} to achieve their goals by reminding them of their long term vision and share some clear actions to take`,
         'to improve chances of success. Your summary should be under 50 words and strategize the top 1 most strategic next move to take to optimize for success, ignoring tasks that are not relevant in the current context.\n',
         'Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)\n',
-        'Please provide your feedback in the following format with clear section breaks:\n',
+        'Please provide your feedback in the following format with clear section breaks. Never use "the user". Stick with first person. The last sentence should always end with a targeted recommendation:\n',
         '[SHORT_TERM]',
         `Summarize the user's day based on the websites and topics the user has visited in the last 24 hours: ${shortTermSummary}.\n`,
         '[LONG_TERM]',

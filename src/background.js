@@ -23,12 +23,11 @@
  * }
  */
 import StorageManager from './utils/StorageManager';
-import { MonitoringService } from './utils/monitoring';
 
 // Constants
 const IDLE_TIMEOUT = 30; // seconds
 const UPDATE_INTERVAL = 5000; // 5 seconds
-const MONITORING_INTERVAL = 60000; // 1 minute
+const DAY_IN_MS = 86400000; // 24 hours in milliseconds
 
 // State management
 let activeTab = null;
@@ -37,13 +36,62 @@ let lastActiveTime = Date.now();
 // Initialize monitoring
 let monitoringInterval;
 
+async function updateShortTermStats(domain, duration) {
+    try {
+        console.log('Attempting to update stats for:', {
+            domain,
+            duration,
+            time: new Date().toISOString()
+        });
+        
+        const shortTermStats = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM) || 
+            { domains: {}, total: 0, lastUpdate: Date.now() };
+            
+        console.log('Current stats before update:', shortTermStats);
+
+        // Reset stats if last update was more than 24 hours ago
+        if (Date.now() - shortTermStats.lastUpdate > DAY_IN_MS) {
+            shortTermStats.domains = {};
+            shortTermStats.total = 0;
+        }
+
+        // Update domain time
+        shortTermStats.domains[domain] = (shortTermStats.domains[domain] || 0) + duration;
+        shortTermStats.total += duration;
+        shortTermStats.lastUpdate = Date.now();
+
+        console.log('Updating short term stats:', { domain, duration, shortTermStats });
+        await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM, shortTermStats);
+    } catch (error) {
+        console.error('Error updating short term stats:', error);
+    }
+}
+
 async function startMonitoring() {
-    const usage = await MonitoringService.checkStorageUsage();
-    console.log('Initial storage usage:', usage);
+    await StorageManager.initialize();
     
     monitoringInterval = setInterval(async () => {
-        await MonitoringService.checkStorageUsage();
-    }, MONITORING_INTERVAL);
+        if (!activeTab?.url) return;
+
+        try {
+            const now = Date.now();
+            const duration = Math.floor((now - lastActiveTime) / 1000);
+            
+            if (duration > 0) {
+                const domain = new URL(activeTab.url).hostname;
+                await updateShortTermStats(domain, duration);
+                lastActiveTime = now;
+            }
+        } catch (error) {
+            console.error('Error in monitoring interval:', error);
+        }
+    }, UPDATE_INTERVAL);
+
+    // Add initial tab tracking
+    const [currentTab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (currentTab) {
+        await handleTabChange(currentTab);
+    }
 }
 
 // Installation and update handling
@@ -84,16 +132,22 @@ chrome.runtime.onSuspend.addListener(async () => {
 });
 
 // Helper functions
-async function handleTabChange(newTab) {
-    if (activeTab) {
-        const timeSpent = Date.now() - lastActiveTime;
-        if (timeSpent >= UPDATE_INTERVAL) {
-            await StorageManager.trackVisit(activeTab.url, timeSpent);
+async function handleTabChange(tab) {
+    if (!tab?.url || tab.url.startsWith('chrome://')) return;
+
+    const now = Date.now();
+    
+    // update short term stats if the user accessed a new tab
+    if (activeTab && activeTab.url !== tab.url) {
+        const duration = Math.floor((now - lastActiveTime) / 1000);
+        if (duration > 0) {
+            const oldDomain = new URL(activeTab.url).hostname;
+            await updateShortTermStats(oldDomain, duration);
         }
     }
-
-    activeTab = newTab;
-    lastActiveTime = Date.now();
+    
+    activeTab = tab;
+    lastActiveTime = now;
 }
 
 async function handleInactiveState() {

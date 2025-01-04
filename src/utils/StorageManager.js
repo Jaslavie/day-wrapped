@@ -1,7 +1,39 @@
+/**
+ * Cache Structure:
+ * {
+ *     activeTab: { id: number, url: string, startTime: number }, // current tab
+ *     lastActiveTime: number, // last time user was active
+ * }
+ * 
+ * Shot Term Memory (array of objects):
+ * {
+ *      [index: number]: {
+ *          time: number,                 // time accessed in seconds
+ *          url: string                   // exact url accessed
+ *      }
+ * }
+ * 
+ * Long Term Memory:
+ * {
+ *      summaries: [{
+ *          week: number,                   // week number
+ *          summary: string,                 // nlp summary of the week
+ *          topDomains: [{
+ *              domain: string,             // domain
+ *              count: number               // number of times visited
+ *          }]
+ *      }],
+ *      lastCleanup: number,                // last time user was active
+ * }
+ * 
+ * goals:
+ * {
+ *      shortTerm: [string],
+ *      longTerm: [string]
+ * }
+ */
 class StorageManager {
     static STORAGE_KEYS = {
-        SHORT_TERM: 'shortTermStats',
-        LONG_TERM: 'longTermStats',
         GOALS: 'goals',
         USER_NAME: 'userName',
         SHORT_TERM_MEMORY: 'shortTermMemory',
@@ -9,13 +41,17 @@ class StorageManager {
     };
 
     static async initialize() {
-        // Initialize storage with empty values
+        const now = Date.now();
         const defaults = {
-            [this.STORAGE_KEYS.SHORT_TERM]: { domains: {}, total: 0 },
-            [this.STORAGE_KEYS.LONG_TERM]: { domains: {}, total: 0 },
-            [this.STORAGE_KEYS.GOALS]: { shortTerm: [], longTerm: [] },
-            [this.STORAGE_KEYS.SHORT_TERM_MEMORY]: { domains: {}, lastUpdate: Date.now() },
-            [this.STORAGE_KEYS.LONG_TERM_MEMORY]: { summaries: [], lastCleanup: Date.now() }
+            [this.STORAGE_KEYS.GOALS]: { 
+                shortTerm: [], 
+                longTerm: [] 
+            },
+            [this.STORAGE_KEYS.SHORT_TERM_MEMORY]: [],
+            [this.STORAGE_KEYS.LONG_TERM_MEMORY]: { 
+                summaries: [], 
+                lastCleanup: now 
+            }
         };
 
         for (const [key, value] of Object.entries(defaults)) {
