@@ -1,7 +1,13 @@
 import StorageManager from './StorageManager';
 import context from '../context/context';
 
+const API_KEY = process.env.OPENAI_API_KEY;
+
 export const summarizeDay = async () => {
+    if (!API_KEY) {
+        throw new Error("OpenAI API key not found in environment variables");
+    }
+
     /**
      * Function to summarize the user's day w
      */
@@ -28,7 +34,7 @@ export const summarizeDay = async () => {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "Authorization": `Bearer ${process.env.OPENAI_API_KEY}`,
+                "Authorization": `Bearer ${API_KEY}`,
             },
             body: JSON.stringify({
                 model: "gpt-3.5-turbo",
@@ -54,7 +60,7 @@ export const summarizeDay = async () => {
         return content;
     } catch (error) {
         console.error("Error:", error);
-        throw new Error("Failed to generate summary. Please check your API key and try again.");
+        throw error;
     }
 };
 
