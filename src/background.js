@@ -26,7 +26,7 @@ import StorageManager from './utils/StorageManager';
 import MonitoringService from './utils/monitoring';
 // Constants
 const IDLE_TIMEOUT = 30; // seconds
-const UPDATE_INTERVAL = 5000; // 5 seconds
+const UPDATE_INTERVAL = 60000; // 1 minute
 const DAY_IN_MS = 86400000; // 24 hours in milliseconds
 
 // State management
@@ -38,11 +38,13 @@ let monitoringInterval;
 
 async function updateShortTermStats(domain, duration) {
     try {
+        if (!activeTab?.url) return;
+        
         const visit = {
             time: Date.now(),
             url: activeTab.url,
             duration: duration,
-            id: Date.now() + Math.random() // Ensure unique entries
+            id: `tracked-${Date.now()}`
         };
 
         await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY, visit);

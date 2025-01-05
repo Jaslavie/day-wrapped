@@ -137,14 +137,15 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary)
     const parts = [
         `I'm your strategic advisor and friend focused on ${context.writingStyle.focus}. I will analyze your browsing patterns deeply and evaluate your progress based on your goals and background about you in a casual and conversational tone.`,
         `Here's my communication style:\n${toneContext}\n`,
-        `Response Structure: Break down the top 1-2 main patterns of browsing behavior and end with a sentence suggesting a strategic and targeted next step based on context of my goals. ${context.writingStyle.observations.strategicFocus} Use the following format: [SHORT_TERM] [LONG_TERM] [GOAL_ALIGNMENT] [ONE_LINER] each in their own unique sections. Use first-person pronouns. In your response, pull out specific examples of the user's browsing history. Avoid generic responses. Each summary should be limited to 100 characters max and be in paragraph form only.`,
+        `Response Structure: Break down the top 1-2 main patterns of browsing behavior in 2-3 sentences. ${context.writingStyle.observations.strategicFocus} Use the following format: [SHORT_TERM] [LONG_TERM] [GOAL_ALIGNMENT] [ONE_LINER] each in their own unique sections. Use first-person pronouns. In your response, pull out specific examples of the user's browsing history. Avoid generic responses. Each summary should be limited to 100 characters max and be in paragraph form only.`,
+        `Rules: A semicolon is not allowed. Each sentence should be a complete sentence and thought. Sentences should flow logically into each other and include transition phrases. Sentences shall not pass 100 characters.`,
         '[SHORT_TERM]',
-        `Analyze the browsing patterns from the last 24 hours: ${shortTermSummary}.\n`,
+        `Analyze the browsing patterns from the last 24 hours: ${shortTermSummary}. End with a sentence suggesting a strategic and targeted next step based on context of my goals.\n`,
         '[LONG_TERM]',
         `Compare with historical patterns: ${longTermSummary}.\n`,
         '[GOAL_ALIGNMENT]',
         `Evaluate progress on goals: ${goalsSummary}. The last sentence provides targeted recommendations for improvement.\n`,
-        'Make strategic inferences about current projects from browsing patterns.',
+        'Make strategic inferences about current projects from browsing patterns. Return 1-2 example urls from the browsing history to illustrate the patterns.',
         '[ONE_LINER]',
         "Give a friend-to-friend summary of the day's progress and momentum in one sentence."
     ];

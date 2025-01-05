@@ -128,28 +128,37 @@ class StorageManager {
                 const historyItems = existingData.filter(item => item.id?.toString().startsWith('history-'));
                 const trackedItems = existingData.filter(item => !item.id?.toString().startsWith('history-'));
                 
-                // Combine with new visit
-                const combinedData = Array.isArray(value) 
-                    ? [...historyItems, ...trackedItems, ...value]
-                    : [...historyItems, ...trackedItems, value];
-                
-                // Clean up old data (older than 24 hours)
+                // For tracked items, update duration if same URL within last minute
+                let newValue = value;
+                if (!Array.isArray(value)) {
+                    const lastSimilarVisit = trackedItems
+                        .reverse()
+                        .find(item => {
+                            return item.url === value.url && 
+                                   (value.time - item.time) < 60000; // Within last minute
+                        });
+
+                    if (lastSimilarVisit) {
+                        // Update duration instead of creating new entry
+                        lastSimilarVisit.duration += value.duration;
+                        newValue = null;
+                    }
+                }
+
+                // Combine data
+                const combinedData = [
+                    ...historyItems,
+                    ...trackedItems,
+                    ...(newValue ? [newValue] : [])
+                ];
+
+                // Clean up old data
                 const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
-                const recentVisits = combinedData.filter(item => 
-                    item && item.time && item.time > oneDayAgo
-                );
-                
-                // Sort by time
-                recentVisits.sort((a, b) => a.time - b.time);
-                
+                const recentVisits = combinedData
+                    .filter(item => item && item.time > oneDayAgo)
+                    .sort((a, b) => a.time - b.time);
+
                 await chrome.storage.local.set({ [key]: recentVisits });
-                
-                // Log for debugging
-                console.log('Updated memory:', {
-                    totalItems: recentVisits.length,
-                    historyItems: recentVisits.filter(i => i.id?.toString().startsWith('history-')).length,
-                    trackedItems: recentVisits.filter(i => !i.id?.toString().startsWith('history-')).length
-                });
             } else {
                 await chrome.storage.local.set({ [key]: value });
             }

@@ -114,14 +114,15 @@ const Summary = () => {
                     <Overview loading={loading} />
                     <div className="summary-container">
                         <div className="summary-section">
-                            <div className="subheading">⚡️ one-liner</div>
+                            <div className="subheading">✨ today's summary</div>
                             <hr />
                             {loading ? (
-                                <Skeleton count={2} height={20} />
+                                <Skeleton count={4} height={20} />
                             ) : (
-                                <p>{summary.oneLiner || "No summary available"}</p>
+                                <p>{summary.shortTerm}</p>
                             )}
                         </div>
+                        
                         <div className="summary-section">
                             <div className="subheading">📝️ alignment with goals</div>
                             <hr />
@@ -131,13 +132,14 @@ const Summary = () => {
                                 <p>{summary.goalAlignment}</p>
                             )}
                         </div>
+                        
                         <div className="summary-section">
-                            <div className="subheading">✨ today's summary</div>
+                            <div className="subheading">⚡️ one-liner</div>
                             <hr />
                             {loading ? (
-                                <Skeleton count={4} height={20} />
+                                <Skeleton count={2} height={20} />
                             ) : (
-                                <p>{summary.shortTerm}</p>
+                                <p>{summary.oneLiner || "No summary available"}</p>
                             )}
                         </div>
                     </div>
