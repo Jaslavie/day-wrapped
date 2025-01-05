@@ -131,31 +131,44 @@ class StorageManager {
                 // For tracked items, update duration if same URL within last minute
                 let newValue = value;
                 if (!Array.isArray(value)) {
-                    const lastSimilarVisit = trackedItems
-                        .reverse()
-                        .find(item => {
-                            return item.url === value.url && 
-                                   (value.time - item.time) < 60000; // Within last minute
-                        });
+                    const existingVisit = trackedItems.find(item => 
+                        item.url === value.url && 
+                        (value.time - item.time) < 86400000
+                    );
 
-                    if (lastSimilarVisit) {
-                        // Update duration instead of creating new entry
-                        lastSimilarVisit.duration += value.duration;
+                    if (existingVisit) {
+                        existingVisit.duration += value.duration;
+                        existingVisit.time = value.time; // Update timestamp
                         newValue = null;
                     }
                 }
 
-                // Combine data
+                // Combine data with proper aggregation
+                const aggregatedTrackedItems = trackedItems.reduce((acc, curr) => {
+                    const existingVisit = acc.find(item => 
+                        item.url === curr.url && 
+                        Math.abs(item.time - curr.time) < 86400000
+                    );
+                    
+                    if (existingVisit) {
+                        existingVisit.duration += curr.duration;
+                        existingVisit.time = Math.max(existingVisit.time, curr.time);
+                    } else {
+                        acc.push(curr);
+                    }
+                    return acc;
+                }, []);
+
                 const combinedData = [
                     ...historyItems,
-                    ...trackedItems,
+                    ...aggregatedTrackedItems,
                     ...(newValue ? [newValue] : [])
                 ];
 
                 // Clean up old data
-                const oneDayAgo = Date.now() - (24 * 60 * 60 * 1000);
+                const oneDayAgo = Date.now() - 86400000;
                 const recentVisits = combinedData
-                    .filter(item => item && item.time > oneDayAgo)
+                    .filter(item => item.time > oneDayAgo)
                     .sort((a, b) => a.time - b.time);
 
                 await chrome.storage.local.set({ [key]: recentVisits });

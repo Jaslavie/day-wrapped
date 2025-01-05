@@ -37,17 +37,47 @@ let lastActiveTime = Date.now();
 let monitoringInterval;
 
 async function updateShortTermStats(domain, duration) {
+    /**
+     * Update short term memory for the current day
+     * 
+     * @param {string} domain - The domain of the website visited
+     * @param {number} duration - The duration of the visit in seconds
+     */
     try {
         if (!activeTab?.url) return;
         
-        const visit = {
-            time: Date.now(),
-            url: activeTab.url,
-            duration: duration,
-            id: `tracked-${Date.now()}`
-        };
+        const currentTime = Date.now();
+        const currentUrl = activeTab.url;
 
-        await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY, visit);
+        // Get existing short term memory
+        const existingData = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY) || [];
+        
+        // Find if we already have this URL in our recent history
+        const existingVisitIndex = existingData.findIndex(visit => 
+            visit.url === currentUrl && 
+            // Only combine if within the last 24 hours
+            (currentTime - visit.time) < DAY_IN_MS
+        );
+
+        let updatedData;
+        if (existingVisitIndex !== -1) {
+            // Update existing visit
+            existingData[existingVisitIndex].duration += duration;
+            existingData[existingVisitIndex].time = currentTime; // Update timestamp
+            updatedData = existingData;
+        } else {
+            // Add new visit
+            const visit = {
+                time: currentTime,
+                url: currentUrl,
+                duration: duration,
+                id: `tracked-${currentTime}`
+            };
+            updatedData = [...existingData, visit];
+        }
+
+        // Update storage with the entire array
+        await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY, updatedData);
     } catch (error) {
         console.error('Error updating short term stats:', error);
     }
