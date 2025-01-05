@@ -1,83 +1,110 @@
 import StorageManager from './StorageManager';
 import context from '../context/context';
+import { PRODUCTIVITY_SCORE, RULES } from './rules';
 
 const API_KEY = process.env.OPENAI_API_KEY;
 
 export const summarizeDay = async () => {
-    if (!API_KEY) {
-        throw new Error("OpenAI API key not found in environment variables");
-    }
+    if (!API_KEY) throw new Error("OpenAI API key not found")
 
-    /**
-     * Function to summarize the user's day w
-     */
-    try {
-        const { 
-            shortTermMemory, 
-            longTermMemory, 
-            goals, 
-            userName 
-        } = await StorageManager.getMultiple([
-            StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY,
-            StorageManager.STORAGE_KEYS.LONG_TERM_MEMORY,
-            StorageManager.STORAGE_KEYS.GOALS,
-            StorageManager.STORAGE_KEYS.USER_NAME
-        ]);
+    const { shortTermMemory, longTermMemory, goals, userName } = await StorageManager.getMultiple([
+        StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY,
+        StorageManager.STORAGE_KEYS.LONG_TERM_MEMORY,
+        StorageManager.STORAGE_KEYS.GOALS,
+        StorageManager.STORAGE_KEYS.USER_NAME
+    ])
 
-        const shortTermSummary = formatData(shortTermMemory || [], "short-term");
-        const longTermSummary = formatData(longTermMemory || [], "context");
-        const goalsSummary = formatGoals(goals || [], "goals");
+    const productivityMetrics = PRODUCTIVITY_SCORE.calculate(shortTermMemory)
+    const shortTermSummary = formatData(shortTermMemory || [], "short-term")
+    const longTermSummary = formatData(longTermMemory || [], "context")
+    const goalsSummary = formatGoals(goals || [], "goals")
 
-        const prompt = createPrompt(userName, shortTermSummary, longTermSummary, goalsSummary);
+    const prompt = createPrompt(userName, shortTermSummary, longTermSummary, goalsSummary, productivityMetrics)
 
-        const response = await fetch("https://api.openai.com/v1/chat/completions", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "Authorization": `Bearer ${API_KEY}`,
-            },
-            body: JSON.stringify({
-                model: "gpt-3.5-turbo",
-                messages: [{
-                    role: "user",
-                    content: prompt
-                }],
-                max_tokens: 300
-            }),
-        });
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${API_KEY}`
+        },
+        body: JSON.stringify({
+            model: "gpt-3.5-turbo",
+            messages: [{ role: "user", content: prompt }],
+            max_tokens: 300
+        })
+    })
 
-        if (!response.ok) {
-            throw new Error(`API request failed: ${response.status} ${response.statusText}`);
-        }
+    if (!response.ok) throw new Error(`API request failed: ${response.status}`)
+    
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content
+}
 
-        const data = await response.json();
-        const content = data.choices?.[0]?.message?.content; // content of the response
+const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary, productivityMetrics) => {
+    const systemContext = `Hey! I'm your productivity friend who gets your background as a design engineer at UCI studying CS and Neuroscience. I know you're all about that frontier tech space and aiming for Forbes 30u30.
 
-        if (!content) {
-            throw new Error("No content in API response");
-        }
+        Your vibe and my response style:
+        ${context.examples.slice(3, 6).join('\n')}
 
-        return content;
-    } catch (error) {
-        console.error("Error:", error);
-        throw error;
-    }
-};
+        I'll use casual phrases like ${context.casualPhrases.slice(0, 4).join(', ')} and keep it real - no corporate speak.
+
+        Quick context on your productivity:
+        Score: ${productivityMetrics.score.toFixed(2)} - ${productivityMetrics.level}
+        ${productivityMetrics.label}
+
+        I'll analyze your browsing patterns through the lens of your interests in ${context.writingStyle.focus} and your connection to ${context.additionalContext[3]}.`
+
+    const analysisPrompt = `
+        Let's break down your browsing patterns in these sections (keep it casual but strategic):
+
+        [SHORT_TERM]
+        Here's what I'm seeing in your tabs:
+        ${shortTermSummary}
+
+        Follow this flow but make it conversational:
+        ${RULES.shortTerm.structure.join('\n')}
+
+        [LONG_TERM]
+        Looking at your patterns over time:
+        ${longTermSummary}
+
+        Tell me how these patterns connect to your journey of mastery and tech goals.
+
+        [GOAL_ALIGNMENT]
+        Your goals and current focus:
+        ${goalsSummary}
+
+        Break it down following this structure (but keep it friend-to-friend):
+        ${RULES.goalAlignment.structure.join('\n')}
+
+        [ONE_LINER]
+        Give me that real talk - how's the momentum looking?
+
+        Remember: Keep each section clearly marked with [SECTION_NAME], use 2-3 sentences per section, and make it sound like we're having a casual convo about your progress. Reference specific URLs and what they mean for your goals, but don't just list domains.
+
+        Style notes:
+        - Talk like we're friends chatting about progress
+        - Use phrases from ${context.casualPhrases.slice(0, 3).join(', ')}
+        - Keep it strategic but not formal
+        - Channel that ${context.writingStyle.personality} energy
+        - Make specific references to frontier tech and your CS/Neuroscience interests when relevant`
+
+    return `${systemContext}\n\n${analysisPrompt}`
+}
 
 // helper function to retrieve data from chrome storage
 const formatData = (data, type) => {
-    if (!Array.isArray(data) || data.length === 0) return `No ${type} data available`;
+    if (!Array.isArray(data) || data.length === 0) return `No ${type} data available`
 
     // Group by domain for better summary
     const domainGroups = data.reduce((acc, entry) => {
-        if (!entry?.url) return acc;
+        if (!entry?.url) return acc
         
         try {
-            const url = new URL(entry.url);
-            const domain = url.hostname;
+            const url = new URL(entry.url)
+            const domain = url.hostname
             
-            // Skip chrome:// and empty URLs
-            if (domain.startsWith('chrome://') || !domain) return acc;
+            if (domain.startsWith('chrome://') || !domain) return acc
             
             // Create or update domain entry
             if (!acc[domain]) {
@@ -86,69 +113,31 @@ const formatData = (data, type) => {
                     visits: [],
                     count: 0,
                     totalDuration: 0
-                };
+                }
             }
             
-            acc[domain].visits.push(entry);
-            acc[domain].count++;
-            acc[domain].totalDuration += entry.duration || 0;
+            acc[domain].visits.push(entry)
+            acc[domain].count++
+            acc[domain].totalDuration += entry.duration || 0
             
         } catch (e) {
-            console.warn('Invalid URL in formatData:', entry.url);
+            console.warn('Invalid URL in formatData:', entry.url)
         }
-        return acc;
-    }, {});
+        return acc
+    }, {})
 
-    // Get top domains by visit count
     const topDomains = Object.values(domainGroups)
         .sort((a, b) => b.count - a.count)
-        .slice(0, 10);
+        .slice(0, 10)
 
     return topDomains.map(domain => 
         `- ${domain.domain}: ${domain.count} visits (${Math.round(domain.totalDuration / 60)} minutes)`
-    ).join('\n');
-};
-
-// helper function to format goals
-const formatGoals = (goals) => {
-    if (goals.length === 0) return "No goals available";
-
-    // format goals for the LLM in the following format: - short-term goal or - long-term goal
-    return `Short-term goals:\n${goals.shortTerm.map(goal => `- ${goal}`).join("\n")}\n\n` +
-    `Long-term goals:\n${goals.longTerm.map(goal => `- ${goal}`).join("\n")}`;
+    ).join('\n')
 }
 
-const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary) => {
-    const toneContext = `
-        Writing Style:
-        - ${context.writingStyle.tone}
-        - ${context.writingStyle.tempo}
-        - Use casual phrases like: ${context.casualPhrases.join(', ')}
-        - ${context.writingStyle.observations.conciseness}
-        - ${context.writingStyle.observations.prioritization}
-        
-        Example responses to match in writing style:
-        ${context.examples.slice(0, 5).join('\n')}
-
-        Use additional context:
-        ${context.additionalContext.join('\n')}
-    `;
-
-    const parts = [
-        `I'm your strategic advisor and friend focused on ${context.writingStyle.focus}. I will analyze your browsing patterns deeply and evaluate your progress based on your goals and background about you in a casual and conversational tone.`,
-        `Here's my communication style:\n${toneContext}\n`,
-        `Response Structure: Break down the top 1-2 main patterns of browsing behavior in 2-3 sentences. ${context.writingStyle.observations.strategicFocus} Use the following format: [SHORT_TERM] [LONG_TERM] [GOAL_ALIGNMENT] [ONE_LINER] each in their own unique sections. Use first-person pronouns. In your response, pull out specific examples of the user's browsing history. Avoid generic responses. Each summary should be limited to 100 characters max and be in paragraph form only.`,
-        `Rules: A semicolon is not allowed. Each sentence should be a complete sentence and thought. Sentences should flow logically into each other and include transition phrases. Sentences shall not pass 100 characters.`,
-        '[SHORT_TERM]',
-        `Analyze the browsing patterns from the last 24 hours: ${shortTermSummary}. End with a sentence suggesting a strategic and targeted next step based on context of my goals.\n`,
-        '[LONG_TERM]',
-        `Compare with historical patterns: ${longTermSummary}.\n`,
-        '[GOAL_ALIGNMENT]',
-        `Evaluate progress on goals: ${goalsSummary}. The last sentence provides targeted recommendations for improvement.\n`,
-        'Make strategic inferences about current projects from browsing patterns. Return 1-2 example urls from the browsing history to illustrate the patterns.',
-        '[ONE_LINER]',
-        "Give a friend-to-friend summary of the day's progress and momentum in one sentence."
-    ];
+const formatGoals = (goals) => {
+    if (!goals?.shortTerm?.length && !goals?.longTerm?.length) return "No goals available"
     
-    return parts.join(' ');
-};
+    return `Short-term goals:\n${goals.shortTerm?.map(goal => `- ${goal}`).join("\n") || "None"}\n\n` +
+           `Long-term goals:\n${goals.longTerm?.map(goal => `- ${goal}`).join("\n") || "None"}`
+}
