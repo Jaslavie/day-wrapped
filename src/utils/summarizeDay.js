@@ -68,15 +68,45 @@ export const summarizeDay = async () => {
 const formatData = (data, type) => {
     if (!Array.isArray(data) || data.length === 0) return `No ${type} data available`;
 
-    let result = '';
-    for (let i = 0; i < data.length; i++) {
-        const entry = data[i];
-        result += entry.url 
-            ? `- ${entry.url} (${entry.time})`
-            : `- ${entry.domain}: ${entry.count} visits`;
-        if (i < data.length - 1) result += '\n';
-    }
-    return result;
+    // Group by domain for better summary
+    const domainGroups = data.reduce((acc, entry) => {
+        if (!entry?.url) return acc;
+        
+        try {
+            const url = new URL(entry.url);
+            const domain = url.hostname;
+            
+            // Skip chrome:// and empty URLs
+            if (domain.startsWith('chrome://') || !domain) return acc;
+            
+            // Create or update domain entry
+            if (!acc[domain]) {
+                acc[domain] = {
+                    domain,
+                    visits: [],
+                    count: 0,
+                    totalDuration: 0
+                };
+            }
+            
+            acc[domain].visits.push(entry);
+            acc[domain].count++;
+            acc[domain].totalDuration += entry.duration || 0;
+            
+        } catch (e) {
+            console.warn('Invalid URL in formatData:', entry.url);
+        }
+        return acc;
+    }, {});
+
+    // Get top domains by visit count
+    const topDomains = Object.values(domainGroups)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 10);
+
+    return topDomains.map(domain => 
+        `- ${domain.domain}: ${domain.count} visits (${Math.round(domain.totalDuration / 60)} minutes)`
+    ).join('\n');
 };
 
 // helper function to format goals

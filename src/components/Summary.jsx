@@ -26,10 +26,11 @@ const Summary = () => {
     const handleSummarize = async () => {
         setLoading(true);
         try {
-            const shortTermStats = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM);
-            const weeklyStats = await StorageManager.get(StorageManager.STORAGE_KEYS.WEEKLY);
+            const shortTermMemory = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY);
+            const longTermMemory = await StorageManager.get(StorageManager.STORAGE_KEYS.LONG_TERM_MEMORY);
             
-            const rawSummary = await summarizeDay();
+            const rawSummary = await summarizeDay(shortTermMemory);
+            console.log('Short Term Memory for summary:', shortTermMemory.length);
             console.log('Raw summary:', rawSummary);
             
             if (!rawSummary) {

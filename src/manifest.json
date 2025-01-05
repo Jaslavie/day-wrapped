@@ -6,7 +6,8 @@
   "permissions": [
     "tabs",
     "storage",
-    "idle"
+    "idle",
+    "history"
   ],
   "host_permissions": [
     "<all_urls>"

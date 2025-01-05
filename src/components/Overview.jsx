@@ -15,20 +15,28 @@ const Overview = ({loading}) => {
                 const shortTermMemory = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY);
                 console.log('Short term memory:', shortTermMemory);
 
-                if (!Array.isArray(shortTermMemory) || shortTermMemory.length === 0) {
+                // Use all visits, both from history and tracked
+                const allVisits = shortTermMemory.filter(visit => {
+                    try {
+                        const url = new URL(visit.url);
+                        return !url.hostname.startsWith('chrome://');
+                    } catch (e) {
+                        return false;
+                    }
+                });
+
+                if (allVisits.length === 0) {
                     setError('No browsing data available');
                     setDomains([]);
                     return;
                 }
 
-                // Count domain occurrences
-                const domainCounts = shortTermMemory.reduce((acc, entry) => {
+                // Count domain occurrences from all sources
+                const domainCounts = allVisits.reduce((acc, entry) => {
                     try {
                         const url = new URL(entry.url);
                         const domain = url.hostname;
-                        if (!domain.startsWith('chrome://')) {
-                            acc[domain] = (acc[domain] || 0) + 1;
-                        }
+                        acc[domain] = (acc[domain] || 0) + 1;
                     } catch (e) {
                         // Skip invalid URLs
                     }
@@ -37,13 +45,7 @@ const Overview = ({loading}) => {
 
                 const totalVisits = Object.values(domainCounts).reduce((a, b) => a + b, 0);
 
-                if (totalVisits === 0) {
-                    setError('No active browsing time recorded');
-                    setDomains([]);
-                    return;
-                }
-
-                // Calculate percentages for top 3 domains
+                // Calculate percentages using all visits
                 const topDomains = Object.entries(domainCounts)
                     .sort(([, a], [, b]) => b - a)
                     .slice(0, 3)
@@ -52,14 +54,10 @@ const Overview = ({loading}) => {
                         percentage: Math.round((visits / totalVisits) * 100)
                     }));
 
-                if (isSubscribed) {
-                    setDomains(topDomains);
-                    setError(null);
-                }
+                setDomains(topDomains);
             } catch (error) {
                 console.error('Error fetching domain stats:', error);
-                setError('Error retrieving browsing data');
-                setDomains([]);
+                setError('Error analyzing browsing data');
             }
         }
 

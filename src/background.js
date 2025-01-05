@@ -23,7 +23,7 @@
  * }
  */
 import StorageManager from './utils/StorageManager';
-
+import MonitoringService from './utils/monitoring';
 // Constants
 const IDLE_TIMEOUT = 30; // seconds
 const UPDATE_INTERVAL = 5000; // 5 seconds
@@ -38,30 +38,14 @@ let monitoringInterval;
 
 async function updateShortTermStats(domain, duration) {
     try {
-        console.log('Attempting to update stats for:', {
-            domain,
-            duration,
-            time: new Date().toISOString()
-        });
-        
-        const shortTermStats = await StorageManager.get(StorageManager.STORAGE_KEYS.SHORT_TERM) || 
-            { domains: {}, total: 0, lastUpdate: Date.now() };
-            
-        console.log('Current stats before update:', shortTermStats);
+        const visit = {
+            time: Date.now(),
+            url: activeTab.url,
+            duration: duration,
+            id: Date.now() + Math.random() // Ensure unique entries
+        };
 
-        // Reset stats if last update was more than 24 hours ago
-        if (Date.now() - shortTermStats.lastUpdate > DAY_IN_MS) {
-            shortTermStats.domains = {};
-            shortTermStats.total = 0;
-        }
-
-        // Update domain time
-        shortTermStats.domains[domain] = (shortTermStats.domains[domain] || 0) + duration;
-        shortTermStats.total += duration;
-        shortTermStats.lastUpdate = Date.now();
-
-        console.log('Updating short term stats:', { domain, duration, shortTermStats });
-        await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM, shortTermStats);
+        await StorageManager.set(StorageManager.STORAGE_KEYS.SHORT_TERM_MEMORY, visit);
     } catch (error) {
         console.error('Error updating short term stats:', error);
     }
