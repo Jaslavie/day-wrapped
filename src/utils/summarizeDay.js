@@ -89,38 +89,34 @@ const formatGoals = (goals) => {
 }
 
 const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary) => {
-    // Format the context for the AI
     const toneContext = `
         Writing Style:
-        - Tone: ${context.writingStyle.tone}
-        - Tempo: ${context.writingStyle.tempo}
-        - Focus: ${context.writingStyle.focus}
-        - Personality: ${context.writingStyle.personality}
+        - ${context.writingStyle.tone}
+        - ${context.writingStyle.tempo}
+        - Use casual phrases like: ${context.casualPhrases.join(', ')}
+        - ${context.writingStyle.observations.conciseness}
+        - ${context.writingStyle.observations.prioritization}
+        
+        Example responses to match in writing style:
+        ${context.examples.slice(0, 5).join('\n')}
 
-        Common phrases: ${context.casualPhrases.join(', ')}
-
-        Example responses in my style:
-        ${context.examples.slice(0, 3).map(ex => `- ${ex}`).join('\n')}
+        Use additional context:
+        ${context.additionalContext.join('\n')}
     `;
 
     const parts = [
-        `You are a strategic and empathetic life coach and close friend whose role is to optimize ${userName || "your"}'s day`,
-        'to achieve their professional goals while maintaining a meaningful personal life. Pretend you are taking to them.',
-        `Here's how you should match my communication style:\n${toneContext}\n`,
-        `Your goal is to motivate ${userName || "you"} to achieve their goals by reminding them of their long term vision and share some clear actions to take`,
-        'to improve chances of success. Your summary should be under 50 words and strategize the top 1 most strategic next move to take to optimize for success, ignoring tasks that are not relevant in the current context.\n',
-        'Follow the following framework: 80% structure and direction toward goals (ex: directed coding), 20% serendipity (ex: rabbit holing)\n',
-        'Please provide your feedback in the following format with clear section breaks. Never use "the user". Stick with first person. The last sentence should always end with a targeted recommendation:\n',
+        `I'm your strategic advisor and friend focused on ${context.writingStyle.focus}. I will analyze your browsing patterns deeply and evaluate your progress based on your goals and background about you in a casual and conversational tone.`,
+        `Here's my communication style:\n${toneContext}\n`,
+        `Response Structure: Break down the top 1-2 main patterns of browsing behavior and end with a sentence suggesting a strategic and targeted next step based on context of my goals. ${context.writingStyle.observations.strategicFocus} Use the following format: [SHORT_TERM] [LONG_TERM] [GOAL_ALIGNMENT] [ONE_LINER] each in their own unique sections. Use first-person pronouns. In your response, pull out specific examples of the user's browsing history. Avoid generic responses. Each summary should be limited to 100 characters max and be in paragraph form only.`,
         '[SHORT_TERM]',
-        `Summarize the user's day based on the websites and topics the user has visited in the last 24 hours: ${shortTermSummary}.\n`,
+        `Analyze the browsing patterns from the last 24 hours: ${shortTermSummary}.\n`,
         '[LONG_TERM]',
-        `Compare the user's day with their past browsing history based on the following context: ${longTermSummary}.\n`,
+        `Compare with historical patterns: ${longTermSummary}.\n`,
         '[GOAL_ALIGNMENT]',
-        `Compare the user's day with their goals based on the following goals: ${goalsSummary}.\n`,
-        'Also intelligently make inferences about what the user is working on based on the websites they are accessing',
-        '(ex: if they are on a github repo, they are probably working on a coding project). Indicate ways to improve.\n',
+        `Evaluate progress on goals: ${goalsSummary}. The last sentence provides targeted recommendations for improvement.\n`,
+        'Make strategic inferences about current projects from browsing patterns.',
         '[ONE_LINER]',
-        "Then, meaningfully summarize the user's day in one sentence as if they were responding to a friend's question about how their day went in a friendly tone."
+        "Give a friend-to-friend summary of the day's progress and momentum in one sentence."
     ];
     
     return parts.join(' ');

@@ -34,6 +34,9 @@
     border-radius: 8px
     border: $border
     padding: $spacing-md
+    display: flex
+    flex-direction: column
+    gap: 8px
 
 // Card component styles
 
@@ -42,9 +45,11 @@
 
     &.overview
         display: flex
+        padding: 0 0 $spacing-md 0
         flex-direction: row
         gap: $spacing-sm
         border: none
+        overflow-x: scroll
         .item
             flex: 1
             display: flex

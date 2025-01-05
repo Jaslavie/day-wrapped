@@ -43,19 +43,12 @@ const Summary = () => {
             setShowContent(true);
         } catch (error) {
             console.error("Error summarizing day:", error);
-            setSummary({
-                shortTerm: "Error generating summary. Please check your API key and try again.",
-                longTerm: "",
-                goalAlignment: "",
-                oneLiner: ""
-            });
         } finally {
             setLoading(false);
         }
     }
 
     const parseSummary = (text) => {
-        // initialize section objects
         const sections = {
             shortTerm: '',
             longTerm: '',
@@ -63,45 +56,49 @@ const Summary = () => {
             oneLiner: ''
         };
 
-        let currentSection = null;
-        const lines = text.split('\n');
-
-        for (const line of lines) {
-            const trimmedLine = line.trim();
+        // If no section markers are found, split into logical sections
+        if (!text.includes('[')) {
+            const sentences = text.split(/[.!?]+/).filter(s => s.trim());
             
-            if (trimmedLine.includes('[SHORT_TERM]')) {
-                currentSection = 'shortTerm';
-                sections[currentSection] = trimmedLine.replace('[SHORT_TERM]', '').trim();
-                continue;
-            } else if (trimmedLine.includes('[LONG_TERM]')) {
-                currentSection = 'longTerm';
-                sections[currentSection] = trimmedLine.replace('[LONG_TERM]', '').trim();
-                continue;
-            } else if (trimmedLine.includes('[GOAL_ALIGNMENT]')) {
-                currentSection = 'goalAlignment';
-                sections[currentSection] = trimmedLine.replace('[GOAL_ALIGNMENT]', '').trim();
-                continue;
-            } else if (trimmedLine.includes('[ONE_LINER]')) {
-                currentSection = 'oneLiner';
-                sections[currentSection] = trimmedLine.replace('[ONE_LINER]', '').trim();
-                continue;
+            if (sentences.length >= 3) {
+                sections.shortTerm = sentences[0].trim() + '.';
+                sections.goalAlignment = sentences[1].trim() + '.';
+                sections.oneLiner = sentences[sentences.length - 1].trim() + '.';
+            } else {
+                sections.shortTerm = text.trim();
             }
-
-            if (currentSection && trimmedLine && !trimmedLine.startsWith('[')) {
-                sections[currentSection] += ' ' + trimmedLine;
-            }
+            
+            return sections;
         }
 
-        // Clean up extra spaces
-        Object.keys(sections).forEach(key => {
-            sections[key] = sections[key].trim();
+        // Parse sections with markers
+        const markers = {
+            '[SHORT_TERM]': 'shortTerm',
+            '[LONG_TERM]': 'longTerm',
+            '[GOAL_ALIGNMENT]': 'goalAlignment',
+            '[ONE_LINER]': 'oneLiner'
+        };
+
+        Object.entries(markers).forEach(([marker, sectionKey]) => {
+            const startIndex = text.indexOf(marker);
+            if (startIndex !== -1) {
+                const nextMarkerIndex = Math.min(
+                    ...Object.keys(markers)
+                        .map(m => text.indexOf(m, startIndex + marker.length))
+                        .filter(i => i !== -1),
+                    text.length
+                );
+                
+                const content = text.slice(startIndex + marker.length, nextMarkerIndex).trim();
+                sections[sectionKey] = content;
+            }
         });
 
         return sections;
     };
 
     return (
-        <div className="card summary">
+        <div>
             <div className="heading">Summary of your day</div>
             <button
                 onClick={handleSummarize}
@@ -121,7 +118,7 @@ const Summary = () => {
                             {loading ? (
                                 <Skeleton count={2} height={20} />
                             ) : (
-                                <p>{summary.oneLiner}</p>
+                                <p>{summary.oneLiner || "No summary available"}</p>
                             )}
                         </div>
                         <div className="summary-section">

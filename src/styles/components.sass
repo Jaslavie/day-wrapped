@@ -183,6 +183,9 @@ input[type="checkbox"]
 
     .goals-list
         list-style: none
+        gap: 0px
+        input
+            margin-bottom: $spacing-sm
         
         .goal-item
             display: flex
@@ -192,12 +195,14 @@ input[type="checkbox"]
             width: 100%
             border-bottom: 1px solid $outline
             gap: $spacing-sm
-            padding: $spacing-sm 0
+            padding: 4px 0
             &.short-term
                 align-items: flex-start
-                padding: $spacing-sm 0
                 border-bottom: none
                 justify-content: flex-start
+                label
+                    cursor: pointer
+                    transition: all 0.3s ease
             
 
 .summary-container

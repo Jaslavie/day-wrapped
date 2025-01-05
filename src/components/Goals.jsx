@@ -19,6 +19,7 @@ const Goals = () => {
         longTerm: [] 
     });
     const [newGoal, setNewGoal] = useState("");
+    const [checkedGoals, setCheckedGoals] = useState(new Set());
     const [goalType, setGoalType] = useState(null);
 
     // misc
@@ -31,16 +32,23 @@ const Goals = () => {
     useEffect(() => {
         async function loadGoals() {
             const goals = await StorageManager.get(StorageManager.STORAGE_KEYS.GOALS);
+            const checkedGoalsData = await StorageManager.get('checkedGoals') || new Set();
+            
             if (goals) {
                 // Filter out expired short-term goals
                 const now = Date.now();
                 const filteredGoals = {
                     ...goals,
-                    shortTerm: goals.shortTerm.filter(goal => 
-                        now - goal.timestamp < 24 * 60 * 60 * 1000
-                    ).map(goal => goal.text)
+                    shortTerm: goals.shortTerm
+                        .filter(goal => now - goal.timestamp < 24 * 60 * 60 * 1000)
+                        .map(goal => ({
+                            id: goal.id || goal.timestamp,
+                            text: goal.text,
+                            timestamp: goal.timestamp
+                        }))
                 };
                 setGoals(filteredGoals);
+                setCheckedGoals(new Set(checkedGoalsData));
             }
         }
         loadGoals();
@@ -51,9 +59,14 @@ const Goals = () => {
         
         const updatedGoals = {...goals};
         if (type === 'shortTerm') {
+            const newId = Date.now();
             updatedGoals.shortTerm = [
                 ...goals.shortTerm,
-                { text: newGoal.trim(), timestamp: Date.now() }
+                { 
+                    id: newId,
+                    text: newGoal.trim(), 
+                    timestamp: Date.now()
+                }
             ];
         } else {
             updatedGoals.longTerm = [...goals.longTerm, newGoal.trim()];
@@ -62,7 +75,17 @@ const Goals = () => {
         StorageManager.set(StorageManager.STORAGE_KEYS.GOALS, updatedGoals);
         setGoals(updatedGoals);
         setNewGoal("");
-        setShowAddInput(false); // change back to add more button
+    };
+
+    const handleCheckGoal = (goalId) => {
+        const newCheckedGoals = new Set(checkedGoals);
+        if (newCheckedGoals.has(goalId)) {
+            newCheckedGoals.delete(goalId);
+        } else {
+            newCheckedGoals.add(goalId);
+        }
+        setCheckedGoals(newCheckedGoals);
+        StorageManager.set('checkedGoals', Array.from(newCheckedGoals));
     };
 
     const handleEdit = () => {
@@ -93,21 +116,31 @@ const Goals = () => {
                         placeholder="Type your goals..."
                         onKeyPress={(e) => e.key === 'Enter' && handleAddGoal('shortTerm')}
                     />  
-                    {goals.shortTerm.map((goal, index) => (
-                        <div key={`short-${index}`} className="goal-item short-term">
+                    {goals.shortTerm.map((goal) => (
+                        <div key={goal.id} className="goal-item short-term">
                             <input
                                 type="checkbox"
-                                id={`short-${index}`}
+                                id={`goal-${goal.id}`}
+                                checked={checkedGoals.has(goal.id)}       // check if goal is checked off
+                                onChange={() => handleCheckGoal(goal.id)} // handle checkbox click
                                 className="checkbox"
                             />
-                            <label htmlFor={`short-${index}`}>{goal}</label>
+                            <label 
+                                htmlFor={`goal-${goal.id}`}
+                                style={{ 
+                                    textDecoration: checkedGoals.has(goal.id) ? 'line-through' : 'none',
+                                    color: checkedGoals.has(goal.id) ? '#666' : 'inherit'
+                                }}
+                            >
+                                {goal.text}
+                            </label>
                         </div>
                     ))}
                 </div>
             </div>
 
             {/* Long term goals section */}
-            <div className="card goals">
+            <div className="card goals" style={{ gap: '0px' }}>
                 <div onClick={() => setIsExpanded(!isExpanded)}>
                     <div className="heading">
                         🚀 your long term goals
