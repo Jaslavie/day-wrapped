@@ -58,7 +58,7 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary,
         Let's break down your browsing patterns in these sections (keep it casual but strategic):
 
         [SHORT_TERM]
-        Here's what I'm seeing in your tabs:
+        Here's what I'm seeing in your tabs. I will identify the main pattern of topics you explored based on the url:
         ${shortTermSummary}
 
         Follow this flow but make it conversational:
@@ -74,11 +74,11 @@ const createPrompt = (userName, shortTermSummary, longTermSummary, goalsSummary,
         Your goals and current focus:
         ${goalsSummary}
 
-        Break it down following this structure (but keep it friend-to-friend):
+        Break it down following this structure (but keep it friend-to-friend). Compare it to previous history of activity and how the user is changing over time based on ${longTermSummary}:
         ${RULES.goalAlignment.structure.join('\n')}
 
         [ONE_LINER]
-        Give me that real talk - how's the momentum looking?
+        Give one sentence responding to a friend's question about how my day went and what I did. Give 1 specific example of a url I spent significant time on.
 
         Remember: Keep each section clearly marked with [SECTION_NAME], use 2-3 sentences per section, and make it sound like we're having a casual convo about your progress. Reference specific URLs and what they mean for your goals, but don't just list domains.
 

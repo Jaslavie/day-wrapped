@@ -114,18 +114,20 @@ const RULES = {
         "Never use the word 'user' in your response.",
         "The tone should be casual, conversational, and friendly. It shall not sound overly professional, formal, nor robotic.",
         "When introducing urls, be very specific and analyze the subdirectory of the url to determine the category of the domain.",
-        "In your response, do not repeat the user's goals or information that is already obvious to them or they had given to you."
+        "In your response, do not repeat the user's goals or information that is already obvious to them or they had given to you.",
+        "The strategy should consider the impact of the user's browsing history on long term progress toward goals.",
+        "Do not use generic phrases like 'tech exploration', 'learning', 'productivity tools'."
     ],
     shortTerm: {
         structure: [
-            'First sentence should provide an overview of the main types of websites visited that day (based on the url topics) and how they relate to browsing behavior over the day.',
+            'First sentence should provide an overview of the main categories of websites visited that day (based on the url topics) and how they relate to browsing behavior over the day. Topics should be specific like multi-agent research, project management for a hackathon, etc.',
             'Second sentence provides the primary category of usage and the productivity average of the day. Give 2-3 examples of urls (NOT DOMAINS) that we visited that day to reflect the browsing behavior over the day.',
             'Third sentence provides a strategic and targeted next step based on context of my goals based on the SMART goals framework, indicating what the user can do to improve the next day.'
         ]
     }, 
     goalAlignment: {
         structure: [
-            'First sentence provides a summary of the goals and how they align with the browsing behavior over the day.',
+            'First sentence provides a summary of the goals and how they align with long term AND short term goals, considering momentum over time.',
             'Second sentence provides a strategic and targeted next step based on context of my goals.',
             'Third sentence should indicate how the user should shift their focus to improve the next day, and provide some sample urls and topics that are optimal for the user to visit based on the browsing behavior over the day.'
         ]

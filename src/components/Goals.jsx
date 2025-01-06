@@ -28,7 +28,7 @@ const Goals = () => {
     const [editValue, setEditValue] = useState("");
     const [showAddInput, setShowAddInput] = useState(false);
 
-    // load existing goals from chrome storage
+    // handle data loading
     useEffect(() => {
         async function loadGoals() {
             const goals = await StorageManager.get(StorageManager.STORAGE_KEYS.GOALS);
@@ -76,6 +76,45 @@ const Goals = () => {
         setGoals(updatedGoals);
         setNewGoal("");
     };
+
+    // handle clearing of short term goals
+    const handleClearGoal = (goalId) => {
+        const updatedGoals = {...goals};
+        updatedGoals.shortTerm = goals.shortTerm.filter(goal => goal.id !== goalId); // remove goal from short term goals
+        
+        // remove from memory
+        StorageManager.set(StorageManager.STORAGE_KEYS.GOALS, updatedGoals);
+        setGoals(updatedGoals);
+
+        // remove checked goals
+        if (checkedGoals.has(goalId)) {
+            const newCheckedGoals = new Set(checkedGoals); // create a new set for checked goals
+            newCheckedGoals.delete(goalId);
+            setCheckedGoals(newCheckedGoals);
+            StorageManager.set('checkedGoals', Array.from(newCheckedGoals));
+        }
+    }
+
+    // handle clean up when goals change
+    useEffect(() => {
+        // remove expired short term goals
+        const cleanup = setInterval(() => {
+            const now = Date.now();
+            const updatedGoals = {
+                ...goals,
+                shortTerm: goals.shortTerm.filter(goal =>
+                    now - goal.timestamp < 24 * 60 * 60 * 1000
+                )
+            };
+
+            if (updatedGoals.shortTerm.length !== goals.shortTerm.length) {
+                StorageManager.set(StorageManager.STORAGE_KEYS.GOALS, updatedGoals);
+                setGoals(updatedGoals);
+            }
+        }, 1000 * 60 * 60 * 24); // run every 24 hours
+
+        return () => clearInterval(cleanup);
+    }, [goals]);
 
     const handleCheckGoal = (goalId) => {
         const newCheckedGoals = new Set(checkedGoals);
@@ -184,13 +223,19 @@ const Goals = () => {
                         
                         {/* add new goal */}
                         {showAddInput ? (
-                            <input
-                                type="text"
-                                value={newGoal}
-                                onChange={(e) => setNewGoal(e.target.value)}
-                                placeholder="Enter your long term goal..."
-                                onKeyPress={(e) => e.key === 'Enter' && handleAddGoal('longTerm')}
-                            />
+                            <div className="input-container">
+                                <input
+                                    type="text"
+                                    value={newGoal}
+                                    onChange={(e) => setNewGoal(e.target.value)}
+                                    placeholder="Enter your long term goal..."
+                                    onKeyPress={(e) => e.key === 'Enter' && handleAddGoal('longTerm')}
+                                    style={{ marginTop: '12px' }}
+                                />
+                                <button onClick={() => setShowAddInput(false)}>
+                                    X
+                                </button>
+                            </div>
                         ) : (
                             <button 
                                 className="add-more"
